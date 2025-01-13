@@ -6,8 +6,12 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "types"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
     "test": "jest"
@@ -21,5 +25,13 @@
     "ts-node": "^10.9.2",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "colorette": "^2.0.20",
+    "dotenv": "^16.4.7",
+    "groq-sdk": "^0.9.1",
+    "openai": "^4.77.3",
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.24.1"
   }
 }
