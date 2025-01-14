@@ -1,8 +1,6 @@
-import OpenAI from "openai";
-import { z } from "zod";
-import { zodResponseFormat } from "openai/helpers/zod";
 import { Logger } from "./logger";
 import { State } from "../utils/state";
+import _ from "lodash"; // Lodash import
 
 // --------------------------------------------------
 // Shared logger instance
@@ -15,36 +13,36 @@ function runStateManipulation<T extends Record<string, any>>(
     from: string,
     to: string
 ): IActionResult {
-    const parsedResult = JSON.parse(result.content); // Assumes result.content is a JSON string
+    try {
+        const parsedResult = JSON.parse(result.content); // Assumes result.content is a JSON string
 
-    // Check if "from" exists at the top level in parsedResult
-    if (parsedResult.hasOwnProperty(from)) {
-        const value = parsedResult[from];
-        
-        // If there's a dot in `to`, assume it's a nested path
-        if (to.includes(".")) {
+        // Use Lodash _.get to safely access the nested property
+        const value = _.get(parsedResult, from);
+
+        if (value !== undefined) {
+            // Use the State class's updateNestedKey method to set nested values instead of accessing `state.data`
             state.updateNestedKey(to, value);
-        } else {
-            // Fall back to the single-level update
-            // (though here `to` is typed as string, 
-            //  you can safely assume it's a top-level key if no dot)
-            state.updateKey(to as keyof T, value);
-        }
 
-        return {
-            pass: true,
-            reason: "State Manipulation Successful",
-        };
-    } else {
+            return {
+                pass: true,
+                reason: "State Manipulation Successful",
+            };
+        } else {
+            return {
+                pass: false,
+                reason: `Key "${from}" not found in result.`,
+            };
+        }
+    } catch (error) {
         return {
             pass: false,
-            reason: `Key "${String(from)}" not found in result.`,
+            reason: `Error parsing result content: ${error}`,
         };
     }
 }
 
 export const set = <T extends Record<string, any>>(
-    from: string, 
+    from: string,
     to: string = from
 ): IStateManipulationFunction => {
     return {

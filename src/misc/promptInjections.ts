@@ -1,6 +1,7 @@
 import { Logger } from "./logger";
 import { State } from "../utils/state";
 import { Agent } from "../utils/agent";
+import _ from "lodash"; // Lodash import
 
 // --------------------------------------------------
 // Shared logger instance
@@ -17,33 +18,20 @@ function runInjection<T extends Record<string, any>>(
     errorMsgFn: (field: string) => string
 ): IActionResult {
     if (field) {
-        if (field.includes(".")) {
-            const value = state.getNestedKeyValuePair(field);
-            if (value === undefined) {
-                return {
-                    pass: false,
-                    reason: errorMsgFn(field),
-                };
-            }
+        // Use Lodash _.get to access nested properties
+        const value = _.get(state.getState(), field);
+
+        if (value === undefined) {
             return {
-                pass: true,
-                reason: successMsgFn(value),
-            };
-        } else {
-            const val = (state.getState() as any)[field];
-            if (val === undefined) {
-                return {
-                    pass: false,
-                    reason: errorMsgFn(field),
-                };
-            }
-            // Use getKeyValuePair for consistency
-            const value = state.getKeyValuePair(field as keyof T);
-            return {
-                pass: true,
-                reason: successMsgFn(value),
+                pass: false,
+                reason: errorMsgFn(field),
             };
         }
+
+        return {
+            pass: true,
+            reason: successMsgFn({ [_.last(field.split(".")) || field]: value }),
+        };
     } else {
         return {
             pass: true,
@@ -73,17 +61,15 @@ export const focusOn = <T extends Record<string, any>>(field: string): IEvaluati
 export const chooseBetween = <T extends Record<string, any>>(agents: Agent[]): IEvaluationFunction => {
     return {
         run: (state: State<T>): IActionResult => {
-            // logger.promptInjection(field, focusResult);
-
             const agentsToChooseFrom = JSON.stringify(agents.map(agent => ({
                 name: agent.name,
                 task: agent.task
-            })))
+            })));
 
             return {
                 pass: true,
-                reason: `You can choose one of the following agents, which helps you gather the information required in the state. The agents: ${agentsToChooseFrom}. The current state: ${state}.`
-            }
+                reason: `You can choose one of the following agents, which helps you gather the information required in the state. The agents: ${agentsToChooseFrom}. The current state: ${JSON.stringify(state.getState())}.`
+            };
         },
     };
 };

@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { z } from "zod";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { Logger } from "./logger";
+import _ from "lodash"; // Lodash import
 
 // TODO: Implement nested evaluation like weather.humidity
 
@@ -19,16 +20,17 @@ function runEvaluation(
     conditionFn: (value: any) => boolean,
     errorMsgFn: (value: any) => string
 ): IActionResult {
-    // 1) Check field existence
-    if (!state.hasOwnProperty(field)) {
+    // 1) Check field existence using Lodash _.get
+    const value = _.get(state, field);
+
+    if (value === undefined) {
         return {
             pass: false,
-            reason: `Evaluation unsuccessful: The last result does not contain the field: ${field}`,
+            reason: `Evaluation unsuccessful: The field "${field}" does not exist in the state.`,
         };
     }
 
     // 2) Evaluate condition
-    const value = state[field];
     const pass = conditionFn(value);
 
     // 3) Build result
@@ -39,6 +41,7 @@ function runEvaluation(
             : `Evaluation unsuccessful: ${errorMsgFn(value)}`,
     };
 }
+
 
 // --------------------------------------------------
 // Individual checks
