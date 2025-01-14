@@ -25,7 +25,7 @@ export class State<T extends Record<string, any>> {
     updateNestedKey(path: string, value: unknown): void {
         // Break the dot-delimited path into separate parts
         const keys = path.split(".");
-        
+
         // Make a shallow copy to avoid mutating the original object
         const nextState = { ...this.state };
 
@@ -47,7 +47,7 @@ export class State<T extends Record<string, any>> {
         this.state = nextState;
     }
 
-        // -------------------------------------------------------------------
+    // -------------------------------------------------------------------
     // For nested keys (dot-delimited)
     // -------------------------------------------------------------------
     getNestedKeyValuePair(path: string): Record<string, unknown> {
@@ -55,7 +55,7 @@ export class State<T extends Record<string, any>> {
 
         // The "label" for the returned object is the **final** segment
         const lastKey = keys[keys.length - 1];
-        
+
         // We do the standard "getNestedValue" logic
         let current: any = this.state;
         for (const key of keys) {
@@ -73,5 +73,21 @@ export class State<T extends Record<string, any>> {
 
     getKeyValuePair<K extends keyof T>(key: K): Record<K, T[K]> {
         return { [key]: this.state[key] } as Record<K, T[K]>;
+    }
+}
+
+interface ISupervisorRouter {
+    router: {
+        next: string | undefined;
+        done: boolean | undefined;
+    };
+}
+
+/**
+ * Any T you pass in **must** have the shape of `router.next` and `router.done`.
+ */
+export class SupervisorState<T extends ISupervisorRouter> extends State<T> {
+    constructor(initialState: T) {
+        super(initialState);
     }
 }

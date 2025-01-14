@@ -5,6 +5,11 @@ declare global {
         schema: ZodSchema;
         state?: any;
     }
+
+    interface ISupervisorState {
+        schema: ZodSchema;
+        state?: any;
+    }
     
 }
 

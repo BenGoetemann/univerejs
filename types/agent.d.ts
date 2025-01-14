@@ -41,6 +41,10 @@ declare global {
     state: IState
   }
 
+  interface ISupervisorInvocation {
+    state: ISupervisorState
+  }
+
   interface IMessage {
     name: string // THE NAME OF THE SENDER. RELEVANT FOR SUPERVISOR AGENTS
     role: "user" | "system" | "assistant"
