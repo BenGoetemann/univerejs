@@ -1,5 +1,6 @@
 import { Logger } from "./logger";
 import { State } from "../utils/state";
+import { Agent } from "../utils/agent";
 
 // --------------------------------------------------
 // Shared logger instance
@@ -65,6 +66,24 @@ export const focusOn = <T extends Record<string, any>>(field: string): IEvaluati
             );
             logger.promptInjection(field, focusResult);
             return focusResult;
+        },
+    };
+};
+
+export const chooseBetween = <T extends Record<string, any>>(agents: Agent[]): IEvaluationFunction => {
+    return {
+        run: (state: State<T>): IActionResult => {
+            // logger.promptInjection(field, focusResult);
+
+            const agentsToChooseFrom = JSON.stringify(agents.map(agent => ({
+                name: agent.name,
+                task: agent.task
+            })))
+
+            return {
+                pass: true,
+                reason: `You can choose one of the following agents, which helps you gather the information required in the state. The agents: ${agentsToChooseFrom}. The current state: ${state}.`
+            }
         },
     };
 };

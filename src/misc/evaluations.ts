@@ -3,6 +3,8 @@ import { z } from "zod";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { Logger } from "./logger";
 
+// TODO: Implement nested evaluation like weather.humidity
+
 // --------------------------------------------------
 // Shared logger instance
 // --------------------------------------------------

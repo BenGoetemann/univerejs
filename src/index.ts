@@ -57,9 +57,9 @@ export {
 
 // PROMPT INJECTIONS
 
-import { focusOn } from "./misc/promptInjections";
+import { focusOn, chooseBetween } from "./misc/promptInjections";
 
-export {focusOn}
+export {focusOn, chooseBetween}
 
 // TOOLS
 
