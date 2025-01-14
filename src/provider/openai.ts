@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import 'dotenv/config';  // Loads environment variables from .env
 import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
-import { Logger } from "../misc/logger";
+import { Logger } from "../helper/logger";
 
 const openai = new OpenAI();
 const logger = new Logger()

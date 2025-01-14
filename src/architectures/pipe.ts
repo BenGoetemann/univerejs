@@ -1,5 +1,5 @@
-import { Agent } from "./agent";
-import { Graph } from "./graph"; // wherever your new Graph class is
+import { Agent } from "../base/agent";
+import { Graph } from "../base/graph"; // wherever your new Graph class is
 
 export class Pipe {
     _type = "pipe";

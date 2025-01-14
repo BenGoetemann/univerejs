@@ -1,6 +1,6 @@
-import { openaiCompletion } from "../integrations/openai";
-import { groqCompletion } from "../integrations/groq";
-import { Logger } from "../misc/logger"
+import { openaiCompletion } from "../provider/openai";
+import { groqCompletion } from "../provider/groq";
+import { Logger } from "../helper/logger"
 
 export class Agent {
     _type = "agent"

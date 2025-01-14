@@ -1,5 +1,5 @@
-import { Logger } from "./logger";
-import { State } from "../utils/state";
+import { Logger } from "../helper/logger";
+import { State } from "../base/state";
 import _ from "lodash"; // Lodash import
 
 // --------------------------------------------------

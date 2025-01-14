@@ -1,5 +1,5 @@
 import { bgBlack, bgBlue, underline } from "colorette"
-import { Agent } from "../utils/agent";
+import { Agent } from "../base/agent";
 
 export class Logger {
     result = (name: string, result: ICompletionResult) => {

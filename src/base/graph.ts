@@ -1,5 +1,5 @@
 import { Agent } from "./agent";
-import { Logger } from "../misc/logger";
+import { Logger } from "../helper/logger";
 
 const logger = new Logger();
 

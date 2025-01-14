@@ -1,6 +1,6 @@
-import { Logger } from "./logger";
-import { State } from "../utils/state";
-import { Agent } from "../utils/agent";
+import { Logger } from "../helper/logger";
+import { State } from "../base/state";
+import { Agent } from "../base/agent";
 import _ from "lodash"; // Lodash import
 
 // --------------------------------------------------

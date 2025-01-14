@@ -1,7 +1,7 @@
-import { Agent } from "./utils/agent";
-import { State } from "./utils/state";
-import { Pipe } from "./utils/pipe";
-import { Graph } from "./utils/graph";
+import { Agent } from "./base/agent";
+import { State } from "./base/state";
+import { Pipe } from "./architectures/pipe";
+import { Graph } from "./base/graph";
 
 export { Agent, State, Pipe, Graph }
 
@@ -25,7 +25,7 @@ import {
     notContains,
     gte,
     lte,
-} from "./misc/evaluations";
+} from "./lifecycle/evaluations";
 
 export {
     isSet,
@@ -49,7 +49,7 @@ export {
 };
 
 // STATE MANIPULATIONS
-import { set } from "./misc/stateManipulations";
+import { set } from "./lifecycle/stateManipulations";
 
 export {
     set
@@ -57,13 +57,13 @@ export {
 
 // PROMPT INJECTIONS
 
-import { focusOn, chooseBetween } from "./misc/promptInjections";
+import { focusOn, chooseBetween } from "./lifecycle/promptInjections";
 
 export {focusOn, chooseBetween}
 
 // TOOLS
 
-import { createTool } from "./misc/tools";
+import { createTool } from "./base/tools";
 
 export {
     createTool
