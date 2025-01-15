@@ -17,7 +17,7 @@ export {
     notContains,
     gte,
     lte
-  } from "./evaluations";
+  } from "./resultEvaluations";
   
   export { set } from "./stateManipulations";
   export { focusOn, chooseBetween } from "./promptInjections";

@@ -1,6 +1,5 @@
 import { Agent } from "../base/agent";
 import { Graph } from "../base/graph";
-import { SupervisorState } from "../base";
 
 interface ISupervisorConfig {
     supervisor: Agent;       // The "hub" agent
@@ -17,7 +16,7 @@ export class Supervisor {
         this.childAgents = config.agents;
     }
 
-    async invoke(i: ISupervisorInvocation): Promise<IResult> {
+    async invoke(i: IInvocation): Promise<IResult> {
         // 1) Create a new Graph
         const graph = new Graph();
 
@@ -30,8 +29,6 @@ export class Supervisor {
         graph.addConditionalEdge(this.supervisorAgent, (context) => {
             // You can decide how you want to map `context.state.next` to an agent.
             // e.g. if each agent has a name/id property:
-
-            console.log("========>", context.state.router.done)
 
             if (context.state.router.done) {
                 return "END";

@@ -38,11 +38,7 @@ declare global {
   // ====================================
 
   interface IInvocation {
-    state: IState
-  }
-
-  interface ISupervisorInvocation {
-    state: ISupervisorState
+    state: TState
   }
 
   interface IMessage {

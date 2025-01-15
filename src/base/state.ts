@@ -75,19 +75,3 @@ export class State<T extends Record<string, any>> {
         return { [key]: this.state[key] } as Record<K, T[K]>;
     }
 }
-
-interface ISupervisorRouter {
-    router: {
-        next: string | undefined;
-        done: boolean | undefined;
-    };
-}
-
-/**
- * Any T you pass in **must** have the shape of `router.next` and `router.done`.
- */
-export class SupervisorState<T extends ISupervisorRouter> extends State<T> {
-    constructor(initialState: T) {
-        super(initialState);
-    }
-}

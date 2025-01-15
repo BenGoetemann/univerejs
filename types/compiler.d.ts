@@ -4,13 +4,9 @@ declare global {
     password: string
   }
 
-  interface IState {
-    schema: TObject
-  }
-
   interface ICompiler {
     base: IArchitecture
-    state: IState
+    state: TState
     store: IStore
     verbose: boolean
     thread: TId

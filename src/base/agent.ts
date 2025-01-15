@@ -52,7 +52,7 @@ export class Agent {
 
                 this.history.push(result);
 
-                const evaluations = await this.handleEvaluation(result);
+                const evaluations = await this.handleResultEvaluations(result);
 
                 const output: ICompletionResult = {
                     final: evaluations.pass,
@@ -117,7 +117,7 @@ export class Agent {
         };
     }
 
-    private async runEvaluations(
+    private async runResultEvaluations(
         conditions: Array<{ run: (state: any) => Promise<IActionResult> }>,
         state: any
     ): Promise<IActionResult> {
@@ -139,14 +139,14 @@ export class Agent {
         };
     }
 
-    private async handleEvaluation(result: any): Promise<{ pass: boolean }> {
-        if (!this.lifecycle?.afterRun?.evaluations) {
+    private async handleResultEvaluations(result: any): Promise<{ pass: boolean }> {
+        if (!this.lifecycle?.afterRun?.resultEvaluations) {
             return { pass: true }; // No evaluation needed
         }
 
         try {
             const parsedContent = JSON.parse(result.content);
-            const evaluations = await this.runEvaluations(this.lifecycle.afterRun?.evaluations, parsedContent);
+            const evaluations = await this.runResultEvaluations(this.lifecycle.afterRun?.resultEvaluations, parsedContent);
 
             this.history.push({
                 name: "evaluator",

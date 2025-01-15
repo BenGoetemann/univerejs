@@ -41,6 +41,10 @@ function runStateManipulation<T extends Record<string, any>>(
     }
 }
 
+/**
+* Hint: Implicitly creates new key-value pairs if they are not already defined in the state.
+*/
+
 export const set = <T extends Record<string, any>>(
     from: string,
     to: string = from

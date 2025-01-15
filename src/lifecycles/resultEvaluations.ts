@@ -15,18 +15,18 @@ const logger = new Logger();
 // Helper to standardize the evaluation pattern
 // --------------------------------------------------
 function runEvaluation(
-    state: any,
+    result: any,
     field: string,
     conditionFn: (value: any) => boolean,
     errorMsgFn: (value: any) => string
 ): IActionResult {
     // 1) Check field existence using Lodash _.get
-    const value = _.get(state, field);
+    const value = _.get(result, field);
 
     if (value === undefined) {
         return {
             pass: false,
-            reason: `Evaluation unsuccessful: The field "${field}" does not exist in the state.`,
+            reason: `Evaluation unsuccessful: The field "${field}" does not exist in the result.`,
         };
     }
 
@@ -49,9 +49,9 @@ function runEvaluation(
 
 export const isSet = (field: string): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) =>
                     Array.isArray(value)
@@ -59,7 +59,7 @@ export const isSet = (field: string): IEvaluationFunction => {
                         : value !== undefined && value !== null,
                 () => `Field "${field}" is not set!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -68,16 +68,16 @@ export const isSet = (field: string): IEvaluationFunction => {
 // Greater than
 export const gt = (field: string, x: number): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) =>
                     (Array.isArray(value) && value.length > x) ||
                     (typeof value === "number" && value > x),
                 (value) => `Field "${field}" with value ${value} is not greater than ${x}!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -86,16 +86,16 @@ export const gt = (field: string, x: number): IEvaluationFunction => {
 // Less than
 export const lt = (field: string, x: number): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) =>
                     (Array.isArray(value) && value.length < x) ||
                     (typeof value === "number" && value < x),
                 (value) => `Field "${field}" with value ${value} is not less than ${x}!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -104,14 +104,14 @@ export const lt = (field: string, x: number): IEvaluationFunction => {
 // Equal to
 export const eq = (field: string, x: any): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) => value === x,
                 (value) => `Field "${field}" with value ${value} is not equal to ${x}!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -120,14 +120,14 @@ export const eq = (field: string, x: any): IEvaluationFunction => {
 // Not equal to
 export const neq = (field: string, x: any): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) => value !== x,
                 (value) => `Field "${field}" with value ${value} is equal to ${x}!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -136,9 +136,9 @@ export const neq = (field: string, x: any): IEvaluationFunction => {
 // Contains
 export const contains = (field: string, element: any): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) => {
                     if (Array.isArray(value)) {
@@ -158,7 +158,7 @@ export const contains = (field: string, element: any): IEvaluationFunction => {
                 },
                 () => `Field "${field}" does not contain ${element}!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -167,16 +167,16 @@ export const contains = (field: string, element: any): IEvaluationFunction => {
 // Not empty
 export const notEmpty = (field: string): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) =>
                     (Array.isArray(value) || typeof value === "string") &&
                     value.length > 0,
                 () => `Field "${field}" is empty!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -185,9 +185,9 @@ export const notEmpty = (field: string): IEvaluationFunction => {
 // Greater than or equal to
 export const gte = (field: string, x: number): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) =>
                     (Array.isArray(value) && value.length >= x) ||
@@ -195,7 +195,7 @@ export const gte = (field: string, x: number): IEvaluationFunction => {
                 (value) =>
                     `Field "${field}" with value ${value} is not greater than or equal to ${x}!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -204,9 +204,9 @@ export const gte = (field: string, x: number): IEvaluationFunction => {
 // Less than or equal to
 export const lte = (field: string, x: number): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) =>
                     (Array.isArray(value) && value.length <= x) ||
@@ -214,7 +214,7 @@ export const lte = (field: string, x: number): IEvaluationFunction => {
                 (value) =>
                     `Field "${field}" with value ${value} is not less than or equal to ${x}!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -223,9 +223,9 @@ export const lte = (field: string, x: number): IEvaluationFunction => {
 // Between
 export const between = (field: string, min: number, max: number): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) =>
                     (typeof value === "number" && value >= min && value <= max) ||
@@ -233,7 +233,7 @@ export const between = (field: string, min: number, max: number): IEvaluationFun
                 (value) =>
                     `Field "${field}" with value ${value} is not between ${min} and ${max}!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -242,15 +242,15 @@ export const between = (field: string, min: number, max: number): IEvaluationFun
 // Starts with
 export const startsWith = (field: string, prefix: string): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) => typeof value === "string" && value.startsWith(prefix),
                 (value) =>
                     `Field "${field}" with value ${value} does not start with ${prefix}!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -259,15 +259,15 @@ export const startsWith = (field: string, prefix: string): IEvaluationFunction =
 // Ends with
 export const endsWith = (field: string, suffix: string): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) => typeof value === "string" && value.endsWith(suffix),
                 (value) =>
                     `Field "${field}" with value ${value} does not end with ${suffix}!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -276,15 +276,15 @@ export const endsWith = (field: string, suffix: string): IEvaluationFunction => 
 // Matches regex
 export const matches = (field: string, regex: RegExp): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) => typeof value === "string" && regex.test(value),
                 (value) =>
                     `Field "${field}" with value ${value} does not match regex ${regex}!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -293,9 +293,9 @@ export const matches = (field: string, regex: RegExp): IEvaluationFunction => {
 // Not contains
 export const notContains = (field: string, element: any): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) => {
                     if (Array.isArray(value)) {
@@ -309,7 +309,7 @@ export const notContains = (field: string, element: any): IEvaluationFunction =>
                 (value) =>
                     `Field "${field}" with value ${value} contains ${element}!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -318,20 +318,20 @@ export const notContains = (field: string, element: any): IEvaluationFunction =>
 // Is empty
 export const isEmpty = (field: string): IEvaluationFunction => {
     return {
-        run: (state: any) => {
+        run: (result: any) => {
             // Special logic: if field doesn't exist at all, we consider it pass: true
-            if (!state.hasOwnProperty(field)) {
+            if (!result.hasOwnProperty(field)) {
                 const evaluationResult = {
                     pass: true,
                     reason: "Evaluation successful",
                 };
-                logger.evaluation(field, evaluationResult);
+                logger.resultEvaluation(field, evaluationResult);
                 return evaluationResult;
             }
 
             // If the field exists, run normal check
             const evaluationResult = runEvaluation(
-                state,
+                result,
                 field,
                 (value) =>
                     (Array.isArray(value) || typeof value === "string") &&
@@ -339,7 +339,7 @@ export const isEmpty = (field: string): IEvaluationFunction => {
                 (value) =>
                     `Field "${field}" with value ${value} is not empty!`
             );
-            logger.evaluation(field, evaluationResult);
+            logger.resultEvaluation(field, evaluationResult);
             return evaluationResult;
         },
     };
@@ -356,17 +356,17 @@ export const evaluate = (
     model: string
 ): IEvaluationFunction => {
     return {
-        run: async (state: any): Promise<IActionResult> => {
+        run: async (result: any): Promise<IActionResult> => {
             const openai = new OpenAI();
 
-            if (!state.hasOwnProperty(field)) {
+            if (!result.hasOwnProperty(field)) {
                 return {
                     pass: false,
                     reason: `Evaluation unsuccessful: The last result does not contain the field: ${field}`,
                 };
             }
 
-            const value = state[field];
+            const value = result[field];
             try {
                 const completion = await openai.beta.chat.completions.parse({
                     messages: [
@@ -397,7 +397,7 @@ export const evaluate = (
                         : `Evaluation unsuccessful: Field "${field}" with value ${value} does not satisfy the evaluation task: ${evaluation}`,
                 };
 
-                logger.evaluation(field, evaluationResult);
+                logger.resultEvaluation(field, evaluationResult);
                 return evaluationResult;
             } catch (error) {
                 console.error("Error in OpenAI request:", error);
@@ -415,12 +415,12 @@ export const evaluate = (
 // --------------------------------------------------
 
 export const or = (
-    conditions: Array<{ run: (state: any) => Promise<IActionResult> | IActionResult }>
+    conditions: Array<{ run: (result: any) => Promise<IActionResult> | IActionResult }>
 ): IEvaluationFunction => {
     return {
-        run: async (state: any) => {
+        run: async (result: any) => {
             const results = await Promise.all(
-                conditions.map(async (condition) => await condition.run(state))
+                conditions.map(async (condition) => await condition.run(result))
             );
             const failedEvaluations = results.filter((result) => !result.pass);
             const reasons = failedEvaluations
@@ -442,12 +442,12 @@ export const or = (
 };
 
 export const and = (
-    conditions: Array<{ run: (state: any) => Promise<IActionResult> | IActionResult }>
+    conditions: Array<{ run: (result: any) => Promise<IActionResult> | IActionResult }>
 ): IEvaluationFunction => {
     return {
-        run: async (state: any) => {
+        run: async (result: any) => {
             const results = await Promise.all(
-                conditions.map(async (condition) => await condition.run(state))
+                conditions.map(async (condition) => await condition.run(result))
             );
             const notPassedEvaluations = results.filter((result) => !result.pass);
             const reasons = notPassedEvaluations

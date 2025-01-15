@@ -14,8 +14,8 @@ export class Logger {
         console.dir(parsedResult, { depth: null });
         console.log("------------------")
     }
-    evaluation = (field: string, evaluation: IActionResult) => {
-        console.log(bgBlack(`🤔 EVALUATOR [${field}]`))
+    resultEvaluation = (field: string, evaluation: IActionResult) => {
+        console.log(bgBlack(`🤔 AGENT RESULT EVALUATOR [${field}]`))
         console.dir(evaluation, { depth: null })
         console.log("------------------")
     }

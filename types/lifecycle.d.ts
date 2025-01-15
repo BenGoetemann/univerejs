@@ -1,6 +1,6 @@
 declare global {
     interface IAction {
-        state: IState
+        state: TState
         run: (...params: any) => boolean
     }
 
@@ -24,7 +24,9 @@ declare global {
         },
         afterRun: {
             stateManipulations: IStateManipulation[],
-            evaluations: any[]
+            resultEvaluations: any[]
+            stateEvaluations: any[]
+            stopConditions: any[]
         }
     }
 }
