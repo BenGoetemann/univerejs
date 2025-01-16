@@ -38,10 +38,31 @@ export class Logger {
         console.log("------------------")
     }
 
-    edge = (currentNode: TWorker | string, nextNode: TWorker | string | null) => {
-        const currentNodeName = typeof currentNode === "string" ? currentNode : currentNode.name;
-        const nextNodeName = typeof nextNode === "string" ? nextNode : nextNode?.name || "END";
-        console.log(bgBlue(`⛓️‍💥 ${currentNodeName} => ${nextNodeName}`))
-        console.log("------------------")
-    }
+    edge = (
+        currentNode: TWorker | string,
+        nextNode: TWorker | string | (TWorker | string)[] | null
+    ) => {
+        const currentNodeName =
+            typeof currentNode === "string" ? currentNode : currentNode.name;
+
+        if (Array.isArray(nextNode)) {
+            // nextNode is parallel => array of targets
+            const names = nextNode.map((n) =>
+                typeof n === "string" ? n : n.name
+            );
+            console.log(
+                bgBlue(`⛓️‍💥 ${currentNodeName} => [${names.join(", ")}]`)
+            );
+        } else {
+            // nextNode is either string, Agent, or null
+            const nextNodeName =
+                typeof nextNode === "string"
+                    ? nextNode
+                    : nextNode?.name || "END";
+            console.log(bgBlue(`⛓️‍💥 ${currentNodeName} => ${nextNodeName}`));
+        }
+
+        console.log("------------------");
+    };
+
 }

@@ -42,11 +42,11 @@ export class Agent {
             this.history.push({
                 name: this.name,
                 role: "user",
-                content: `${task} - Please look always at the system messages for evaluation results to improve your output.`
+                content: `${task} !PLEASE LOOK ALWAYS AT THE SYSTEM MESSAGES FOR EVALUATION RESULTS TO IMPROVE YOUR OUTPUT!`
             });
 
             let result;
-            for (let j = 0; j < this.retries; j++) {
+            for (let retry = 0; retry < this.retries; retry++) {
 
                 result = await this.completion({
                     task: task,
@@ -179,7 +179,7 @@ export class Agent {
 
     private handleStateManipulations(result: any, state: any, stage: "afterRun" | "beforeRun"): void {
         this.lifecycle[stage]?.stateManipulations?.forEach((func) => {
-            func.run(result!, state);
+                func.run(result!, state);
         });
     }
 }

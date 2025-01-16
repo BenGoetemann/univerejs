@@ -12,7 +12,12 @@ declare global {
         fn: (state: any) => Agent | string;
     };
 
-    type Edge = DirectEdge | ConditionalEdge;
+    type ParallelEdge = {
+        type: "parallel"; to: (TWorker | string)[]
+        next?: TWorker | string;
+    }
+
+    type Edge = DirectEdge | ConditionalEdge | ParallelEdge;
 }
 
 export { }

@@ -48,34 +48,47 @@ export class Graph {
         return this;
     }
 
+    public addParallelEdges(
+        from: TWorker | string,
+        targets: (TWorker | string)[],
+        next?: TWorker | string
+    ) {
+        const list = this.getOrCreateEdges(from);
+        list.push({ type: "parallel", to: targets, next });
+        return this;
+    }
+
+
+
     /**
      * Internal helper to pick the "next" node for a given edge,
      * given the current `state`.
      */
-    private getNextNodeFromEdge(edge: Edge, state: any): TWorker | string | null {
+    private getNextNodeFromEdge(edge: Edge, state: any): TWorker | string | (TWorker | string)[] | null {
         switch (edge.type) {
             case "direct":
                 return edge.to;
             case "conditional":
                 return edge.fn(state);
+            case "parallel":
+                // Return the array of targets
+                return edge.to;
         }
     }
-
     /**
      * Another helper to pick the FIRST valid next node
      * from all the edge descriptors attached to the current node.
      */
-    private pickNextNode(edges: Edge[], state: any): TWorker | string | null {
+    private pickNextNode(edges: Edge[], state: any): TWorker | string | (TWorker | string)[] | null {
         for (const edge of edges) {
             const next = this.getNextNodeFromEdge(edge, state);
             if (next != null) {
-                // Once we find something valid, we use it.
-                return next;
+                return next; // could be a single node or an array
             }
         }
-        // If no edge returned anything, return null
         return null;
     }
+
 
     /**
      * Invoke the graph by starting from `startNode` (default = "START").
@@ -91,54 +104,96 @@ export class Graph {
         task: string;
         startNode?: TWorker | string;
     }): Promise<IResult> {
-        // 1) We'll accumulate the history from all Agents here
         const combinedHistory: IMessage[] = [];
-
         let currentNode: TWorker | string = startNode;
 
         while (true) {
-            // End condition
+            // 1) Check for END
             if (currentNode === "END") {
                 console.log("Reached END");
                 break;
             }
 
-            // If it's an Agent, we call its invoke method.
+            // 2) If currentNode is an Agent (i.e., not a string), invoke it
             if (typeof currentNode !== "string") {
-                // we assume it's an Agent instance
-
                 const result = await currentNode.invoke({ state, task });
 
-                // If agent returned an updated state, carry it forward
                 if (result?.state) {
                     state = result.state;
                 }
-
-                // If agent returned new history items, push them
                 if (result?.history?.length) {
                     combinedHistory.push(...result.history);
                 }
             }
 
-            // Get the edges for the current node
+            // 3) Find the edges from currentNode
             const edgeList = this.edges.get(currentNode) || [];
             if (edgeList.length === 0) {
                 console.log(`No edges found for node "${String(currentNode)}". Exiting.`);
                 break;
             }
 
-            // Figure out next node
+            // 4) Pick the next node (could be string, Agent, or an array)
             const nextNode = this.pickNextNode(edgeList, state);
             logger.edge(currentNode, nextNode);
 
-            // If no valid next node, we consider it the end
-            currentNode = nextNode ?? "END";
+            // 5) If no valid next node, we consider it done
+            if (!nextNode) {
+                currentNode = "END";
+                continue;
+            }
+
+            // 6) If nextNode is an array => parallel edge
+            if (Array.isArray(nextNode)) {
+                // We'll get here if pickNextNode(...) returned the array
+                // So we need to find the actual edge that triggered it:
+                const parallelEdge = edgeList.find(e => e.type === "parallel");
+                if (!parallelEdge || parallelEdge.type !== "parallel") {
+                    // fallback if somehow no parallel edge found
+                    currentNode = "END";
+                    continue;
+                }
+
+                // 1) run them all in parallel
+                const results = await Promise.all(
+                    nextNode.map(async (n) => {
+                        if (typeof n !== "string") {
+                            return await n.invoke({ state, task });
+                        } else {
+                            // If it's a string, you might do something else,
+                            // or skip, or recursively invoke the graph
+                            return null;
+                        }
+                    })
+                );
+
+                // 2) merge states/histories
+                results.forEach((r) => {
+                    if (r?.state) {
+                        state = r.state; // TODO: Observe
+                    }
+                    if (r?.history?.length) {
+                        combinedHistory.push(...r.history);
+                    }
+                });
+
+                // 3) If the parallel edge has a `next`, route there
+                //    else, default to END
+                const postNode = parallelEdge.next || "END";
+                currentNode = postNode;
+                continue;
+            }
+
+
+            // 7) Otherwise, we have a single nextNode => continue
+            currentNode = nextNode;
         }
 
-        // 2) Return the combined history and the final state
+        // 8) Return the combined history and final state
         return {
             history: combinedHistory,
             state,
         };
     }
+
 }
