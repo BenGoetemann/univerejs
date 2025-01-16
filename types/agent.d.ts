@@ -26,6 +26,7 @@ declare global {
     type: EAgentType;
     retries: number;
     name: string;
+    description: string;
     task: string;
     tools: any[];
     outputType: T;
@@ -38,7 +39,8 @@ declare global {
   // ====================================
 
   interface IInvocation {
-    state: TState
+    state: TState,
+    task: string
   }
 
   interface IMessage {

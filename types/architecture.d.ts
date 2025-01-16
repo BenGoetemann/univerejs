@@ -1,17 +1,24 @@
+import { Agent, Graph, Pipe, Team } from "../src"
+
 declare global {
-  interface IArchitecture extends IAgent {
+  interface IArchitecture {
     _type?: string
-    retries: number
+    name: string,
+    description: string
   }
 
-  interface ISupervisor extends IArchitecture {
-    supervisor: IAgent
-    agents: IArchitecture[]
+  interface ITeam extends IArchitecture {
+    supervisor: Agent
+    worker: TArchitecturesClasses[]
   }
 
   interface IPipe extends IArchitecture {
-    pipe: IArchitecture[]
+    worker: TArchitecturesClasses[]
   }
+
+  interface IGraph extends IArchitecture {}
+
+  type TWorker =  Agent | Team | Pipe | Graph
 }
 
 export { }; // This ensures it is treated as a module

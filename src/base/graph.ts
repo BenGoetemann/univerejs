@@ -1,5 +1,6 @@
 import { Agent } from "./agent";
 import { Logger } from "../helper/logger";
+import { Pipe } from "../architectures";
 
 const logger = new Logger();
 
@@ -9,12 +10,20 @@ export class Graph {
      *   key: a node (string | Agent)
      *   value: an array of Edge descriptors
      */
-    private edges = new Map<Agent | string, Edge[]>();
+    _type = "graph"
+    name: string
+    description: string
+    private edges = new Map<TWorker | string, Edge[]>();
+
+    constructor(i: IGraph) {
+        this.name = i.name
+        this.description = i.description
+    }
 
     /**
      * Helper to safely retrieve or create the edge list for `fromNode`.
      */
-    private getOrCreateEdges(fromNode: Agent | string): Edge[] {
+    private getOrCreateEdges(fromNode: TWorker | string): Edge[] {
         if (!this.edges.has(fromNode)) {
             this.edges.set(fromNode, []);
         }
@@ -24,7 +33,7 @@ export class Graph {
     /**
      * Add a direct edge: always go from `from` to `to`.
      */
-    public addEdge(from: Agent | string, to: Agent | string) {
+    public addEdge(from: TWorker | string, to: TWorker | string) {
         const list = this.getOrCreateEdges(from);
         list.push({ type: "direct", to });
         return this; // allow chaining
@@ -33,7 +42,7 @@ export class Graph {
     /**
      * Add a conditional edge: calls `fn(state)` to decide the next node.
      */
-    public addConditionalEdge(from: Agent | string, fn: (state: any) => Agent | string) {
+    public addConditionalEdge(from: TWorker | string, fn: (state: any) => TWorker | string) {
         const list = this.getOrCreateEdges(from);
         list.push({ type: "conditional", fn });
         return this;
@@ -43,7 +52,7 @@ export class Graph {
      * Internal helper to pick the "next" node for a given edge,
      * given the current `state`.
      */
-    private getNextNodeFromEdge(edge: Edge, state: any): Agent | string | null {
+    private getNextNodeFromEdge(edge: Edge, state: any): TWorker | string | null {
         switch (edge.type) {
             case "direct":
                 return edge.to;
@@ -56,7 +65,7 @@ export class Graph {
      * Another helper to pick the FIRST valid next node
      * from all the edge descriptors attached to the current node.
      */
-    private pickNextNode(edges: Edge[], state: any): Agent | string | null {
+    private pickNextNode(edges: Edge[], state: any): TWorker | string | null {
         for (const edge of edges) {
             const next = this.getNextNodeFromEdge(edge, state);
             if (next != null) {
@@ -75,15 +84,17 @@ export class Graph {
      */
     public async invoke({
         state,
+        task,
         startNode = "START",
     }: {
         state: any;
-        startNode?: Agent | string;
+        task: string;
+        startNode?: TWorker | string;
     }): Promise<IResult> {
         // 1) We'll accumulate the history from all Agents here
         const combinedHistory: IMessage[] = [];
 
-        let currentNode: Agent | string = startNode;
+        let currentNode: TWorker | string = startNode;
 
         while (true) {
             // End condition
@@ -96,7 +107,7 @@ export class Graph {
             if (typeof currentNode !== "string") {
                 // we assume it's an Agent instance
 
-                const result = await currentNode.invoke({ state });
+                const result = await currentNode.invoke({ state, task });
 
                 // If agent returned an updated state, carry it forward
                 if (result?.state) {

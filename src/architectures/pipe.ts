@@ -1,49 +1,47 @@
 import { Agent } from "../base/agent";
-import { Graph } from "../base/graph"; // wherever your new Graph class is
+import { Graph } from "../base/graph";
+import { Team } from "./team";
 
 export class Pipe {
     _type = "pipe";
 
-    retries: number;
-    pipe: (IAgent | IPipe)[];
+    worker: TWorker[]; // Contains instances, not plain objects
+    name: string;
+    description: string;
 
     constructor(pipeConfig: IPipe) {
-        this.retries = pipeConfig.retries;
-        this.pipe = pipeConfig.pipe;
+        this.worker = pipeConfig.worker; // Make sure `pipe` contains instances, not config objects
+        this.name = pipeConfig.name;
+        this.description = pipeConfig.description;
     }
 
     async invoke(i: IInvocation): Promise<IResult> {
         // 1) Create a new Graph
-        const graph = new Graph();
+        const graph = new Graph({
+            name: "pipe_graph",
+            description: "the graph of a pipe",
+        });
 
-        // 2) We'll chain from "START" -> agent1 -> agent2 -> ... -> "END"
-        let prevNode: string | Agent = "START";
+        // 2) We'll chain from "START" -> agentOrPipe1 -> agentOrPipe2 -> ... -> "END"
+        let prevNode: string | TWorker = "START";
 
-        for (const instance of this.pipe) {
-            if (instance._type === "agent") {
-                // Instantiate the agent
-                const agentInstance = new Agent(instance as IAgent);
+        for (const instanceObject of this.worker) {
+            // console.dir(instanceObject, { depth: null }); // Verify that it is already an instance
 
-                // Add a direct edge from the previous node to this agent
-                graph.addEdge(prevNode, agentInstance);
+            // Add a direct edge from the previous node to the instance
+            graph.addEdge(prevNode, instanceObject);
 
-                // Update the "previous node" pointer
-                prevNode = agentInstance;
-            } else if (instance._type === "pipe") {
-                // (Optional) Handle nested pipes if needed.
-                // For simplicity, you might just ignore them or throw an error,
-                // or recursively build a subgraph. Example:
-                // const nested = new Pipe(instance as IPipe);
-                // ...
-            }
+            // Update the "previous node" pointer
+            prevNode = instanceObject;
         }
 
-        // 3) Finally, add a direct edge from the last agent to "END"
+        // 3) Finally, add a direct edge from the last agent or pipe to "END"
         graph.addEdge(prevNode, "END");
 
         // 4) Invoke the graph
         const result = await graph.invoke({
             state: i.state,
+            task: i.task,
             startNode: "START",
         });
 

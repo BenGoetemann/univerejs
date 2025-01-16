@@ -7,6 +7,7 @@ export class Agent {
 
     lifecycle: ILifecycle;
     name: string;
+    description: string;
     task: string;
     retries: number;
     model: EModels;
@@ -20,6 +21,7 @@ export class Agent {
     constructor(agentConfig: IAgent) {
         this.lifecycle = agentConfig.lifecycle;
         this.name = agentConfig.name;
+        this.description = agentConfig.description;
         this.task = agentConfig.task;
         this.retries = agentConfig.retries;
         this.model = agentConfig.model;
@@ -34,7 +36,8 @@ export class Agent {
     async invoke(i: IInvocation): Promise<IResult> {
         try {
 
-            const task = this.handlePromptInjections(this.task, i.state) 
+            let task = this.handlePromptInjections(this.task, i.state) 
+            task = task + " The user task: " + i.task
 
             this.history.push({
                 name: this.name,

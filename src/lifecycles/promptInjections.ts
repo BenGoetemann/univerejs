@@ -58,12 +58,12 @@ export const focusOn = <T extends Record<string, any>>(field: string): IEvaluati
     };
 };
 
-export const chooseBetween = <T extends Record<string, any>>(agents: Agent[]): IEvaluationFunction => {
+export const chooseBetween = <T extends Record<string, any>>(agents: TWorker[]): IEvaluationFunction => {
     return {
         run: (state: State<T>): IActionResult => {
             const agentsToChooseFrom = JSON.stringify(agents.map(agent => ({
                 name: agent.name,
-                task: agent.task
+                description: agent.description
             })));
 
             return {

@@ -1,5 +1,6 @@
 import { bgBlack, bgBlue, underline } from "colorette"
 import { Agent } from "../base/agent";
+import { Pipe } from "../architectures";
 
 export class Logger {
     result = (name: string, result: ICompletionResult) => {
@@ -37,7 +38,7 @@ export class Logger {
         console.log("------------------")
     }
 
-    edge = (currentNode: Agent | string, nextNode: Agent | string | null) => {
+    edge = (currentNode: TWorker | string, nextNode: TWorker | string | null) => {
         const currentNodeName = typeof currentNode === "string" ? currentNode : currentNode.name;
         const nextNodeName = typeof nextNode === "string" ? nextNode : nextNode?.name || "END";
         console.log(bgBlue(`⛓️‍💥 ${currentNodeName} => ${nextNodeName}`))
