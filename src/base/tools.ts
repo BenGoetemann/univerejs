@@ -1,7 +1,7 @@
-import { ZodSchema } from "zod"
+import { z, ZodSchema } from "zod"
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
-const createFunctionDefinition = (name: string, description: string, schema: ZodSchema) => {
+const createFunctionDefinition = (name: string, description: string, schema: ZodSchema): IFuncionDefinition => {
     return {
         type: "function",
         function: {
@@ -12,25 +12,23 @@ const createFunctionDefinition = (name: string, description: string, schema: Zod
         },
     }
 }
-/**
- * Create your own tool by providing the necessary details.
- * 
- * @param {Object} i - The tool definition object.
- * @param {string} i.name - The name of the tool.
- * @param {string} i.description - A description of what the tool does.
- * @param {ZodSchema} i.schema - The Zod schema defining the tool's parameters.
- * @param {Function} i.fn - The function that implements the tool's functionality.
- * @returns {Object} The created tool object.
- */
-export const createTool = (i: {
-    name: string,
-    description: string,
-    schema: any,
-    fn: (...args: any) => any
-}) => {
+
+export const createTool = (i: ICustomToolConfig): ITool => {
     return {
         name: i.name,
         functionDefinition: createFunctionDefinition(i.name, i.description, i.schema),
         fn: i.fn
+    }
+}
+
+export const helloWorldTool = (): ITool => {
+    return {
+        name: "hello world",
+        functionDefinition: createFunctionDefinition("hello world tool", "hello world tool", z.object({
+            hello: z.string().describe('world')
+        })),
+        fn: () => {
+            console.log("Hello World")
+        }
     }
 }

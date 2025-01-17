@@ -1,23 +1,22 @@
 declare global {
-    interface IBaseTool {
-        name: string
-        description: string
+    interface ITool {
+        name: string,
+        functionDefinition: any,
+        fn: (...args: any) => any
     }
 
-    interface IRest extends IBaseTool {
-        url: string,
-        headers?: TObject
+    interface ICustomToolConfig {
+        name: string,
+        description: string,
+        schema: ZodSchema,
+        fn: (...args: any) => any
     }
 
-    interface IGet extends IRest { }
-
-    interface IPost extends IRest {
-        body: TObject
+    interface IFuncionDefinition {
+        type: string,
+        function: { name: string, description: string, strict: boolean, parameters: any }
     }
 
-    interface ITool extends IBaseTool {
-        function: TFunction
-    }
 }
 
 export { }; // This ensures it is treated as a module

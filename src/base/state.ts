@@ -10,18 +10,7 @@ export class State<T extends Record<string, any>> {
     getState(): T {
         return { ...this.state };
     }
-
-    /**
-     * The original updateKey for single-level keys
-     */
-    updateKey<K extends keyof T>(key: K, value: T[K]): void {
-        this.state = {
-            ...this.state,
-            [key]: value,
-        };
-    }
-
-    /**
+    /** 
      * NEW: Update a nested field given a dot path, e.g. "weather.humidity"
      */
     updateNestedKey(path: string, value: unknown): void {

@@ -18,7 +18,7 @@ function runInjection<T extends Record<string, any>>(
     errorMsgFn: (field: string) => string
 ): IActionResult {
     if (field) {
-        // Use Lodash _.get to access nested properties
+        // TODO: Use the actual state method
         const value = _.get(state.getState(), field);
 
         if (value === undefined) {

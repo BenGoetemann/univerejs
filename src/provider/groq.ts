@@ -75,6 +75,12 @@ export const textCompletion = async (completionConfig: ICompletionConfig): Promi
 }
 
 export const toolCompletion = async (completionConfig: ICompletionConfig): Promise<IMessage> => {
+
+  if (!Array.isArray(completionConfig.tools)) {
+    throw new Error(`Tools configuration is invalid for agent "${completionConfig.name}". Expected an array.`);
+  }
+
+
   const completion = await groq.chat.completions.create({
     messages: [
       {

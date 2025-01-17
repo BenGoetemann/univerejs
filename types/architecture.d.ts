@@ -16,9 +16,14 @@ declare global {
     worker: TArchitecturesClasses[]
   }
 
-  interface IGraph extends IArchitecture {}
+  interface IGraph extends IArchitecture { }
 
-  type TWorker =  Agent | Team | Pipe | Graph
+  interface IVote extends IArchitecture {
+    worker: TArchitecturesClasses[]
+    synthesizer: Agent
+  }
+
+  type TWorker = Agent | Team | Pipe | Graph
 }
 
 export { }; // This ensures it is treated as a module

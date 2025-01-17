@@ -36,13 +36,20 @@ export class Agent {
     async invoke(i: IInvocation): Promise<IResult> {
         try {
 
-            let task = this.handlePromptInjections(this.task, i.state) 
-            task = task + " The user task: " + i.task
+            let task = this.handlePromptInjections(this.task, i.state)
 
             this.history.push({
                 name: this.name,
                 role: "user",
-                content: `${task} !PLEASE LOOK ALWAYS AT THE SYSTEM MESSAGES FOR EVALUATION RESULTS TO IMPROVE YOUR OUTPUT!`
+                content: `${task} 
+                
+                !PLEASE LOOK ALWAYS AT THE SYSTEM MESSAGES FOR EVALUATION RESULTS TO IMPROVE YOUR OUTPUT!
+                
+                This is the user task:
+
+                ${i.task}
+                `
+
             });
 
             let result;
@@ -65,6 +72,11 @@ export class Agent {
 
                 if (output.final) {
                     break;
+                }
+
+                // Introduce error condition
+                if (retry === this.retries - 1 && !output.final) {
+                    throw new Error(`Agent "${this.name}" failed to produce a final output after ${this.retries} retries.`);
                 }
             }
 
@@ -90,7 +102,7 @@ export class Agent {
 
         const completionFn = providerMap[provider];
         if (!completionFn) {
-            throw new Error(`Unsupported provider: ${provider}`);
+            throw new Error(`Unsupported provider: "${provider}". Please check your configuration.`);
         }
 
         return await completionFn({
@@ -105,20 +117,26 @@ export class Agent {
         });
     }
 
+
     private extractProviderAndModel(): IProviderModelSplit {
         const regex = /^(.*?)\//;
         const match = this.model.match(regex);
         if (!match || !match[1]) {
-            throw new Error(`Invalid provider: ${this.model}`);
+            throw new Error(`Invalid provider/model format: "${this.model}". Expected format "provider/model".`);
         }
 
         const split = this.model.split("/");
+        const provider = split[0];
+        const model = split[1];
 
-        return {
-            provider: split[0],
-            model: split[1],
-        };
+        const supportedProviders = ["openai", "groq"];
+        if (!supportedProviders.includes(provider)) {
+            throw new Error(`Unsupported provider: "${provider}". Supported providers are: ${supportedProviders.join(", ")}.`);
+        }
+
+        return { provider, model };
     }
+
 
     private async runResultEvaluations(
         conditions: Array<{ run: (state: any) => Promise<IActionResult> }>,
@@ -149,7 +167,7 @@ export class Agent {
 
         try {
             const parsedContent = JSON.parse(result.content);
-            const evaluations = await this.runResultEvaluations(this.lifecycle.afterRun?.resultEvaluations, parsedContent);
+            const evaluations = await this.runResultEvaluations(this.lifecycle.afterRun.resultEvaluations, parsedContent);
 
             this.history.push({
                 name: "evaluator",
@@ -159,28 +177,45 @@ export class Agent {
 
             return evaluations || { pass: true }; // Default to true if evaluations are missing "pass"
         } catch (error) {
-            console.warn("Evaluation failed:", error);
+            console.warn("Evaluation failed due to invalid JSON:", error);
             this.history.push({
                 name: "evaluator",
                 role: "system",
-                content: JSON.stringify({ pass: false, error: error as any })
+                content: JSON.stringify({ pass: false, error: "Invalid JSON in result.content" })
             });
-            return { pass: false }; // Fail-safe on error
+            throw new Error(`Evaluation failed: ${error}`);
         }
     }
 
     private handlePromptInjections(task: string, state: any): string {
         if (this.lifecycle?.beforeRun?.promptInjections?.length > 0) {
-            return task + " " + this.lifecycle.beforeRun.promptInjections[0].run(state).reason
+            try {
+                const injectionResult = this.lifecycle.beforeRun.promptInjections[0].run(state);
+                if (!injectionResult || !injectionResult.reason) {
+                    throw new Error("Invalid prompt injection result.");
+                }
+                return `${task} ${injectionResult.reason}`;
+            } catch (error) {
+                throw new Error(`Prompt injection failed: ${error}`);
+            }
         } else {
-            return task
+            return task;
         }
     }
 
+
     private handleStateManipulations(result: any, state: any, stage: "afterRun" | "beforeRun"): void {
-        this.lifecycle[stage]?.stateManipulations?.forEach((func) => {
-                func.run(result!, state);
-        });
+        const manipulations = this.lifecycle[stage]?.stateManipulations;
+        if (manipulations) {
+            manipulations.forEach((func) => {
+                try {
+                    func.run(result, state);
+                } catch (error) {
+                    throw new Error(`State manipulation failed during "${stage}": ${error}`);
+                }
+            });
+        }
     }
+
 }
 
