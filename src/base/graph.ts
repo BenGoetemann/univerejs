@@ -45,7 +45,7 @@ export class Graph {
                     return (edge as ConditionalEdge).fn === (newEdge as ConditionalEdge).fn;
                 case "parallel":
                     return JSON.stringify((edge as ParallelEdge).to) === JSON.stringify((newEdge as ParallelEdge).to) &&
-                           (edge as ParallelEdge).next === (newEdge as ParallelEdge).next;
+                        (edge as ParallelEdge).next === (newEdge as ParallelEdge).next;
             }
         });
     }
@@ -73,6 +73,9 @@ export class Graph {
     }
 
     public addConditionalEdge(from: TWorker | string, fn: (state: any) => TWorker | string) {
+
+        console.dir(fn, {depth: null})
+
         this.validateNode(from);
         if (typeof fn !== "function") {
             throw new Error(`Invalid function provided for conditional edge from "${String(from)}".`);
@@ -80,7 +83,7 @@ export class Graph {
 
         const list = this.getOrCreateEdges(from);
         const newEdge: ConditionalEdge = { type: "conditional", fn };
-        
+
         if (this.hasEdge(from, newEdge)) {
             throw new Error(`Duplicate conditional edge from "${String(from)}" is not allowed.`);
         }
@@ -138,6 +141,7 @@ export class Graph {
             // Assuming Agent instances are always valid nodes
             return true;
         }
+        return true
     }
 
     private getNextNodeFromEdge(edge: Edge, state: any): TWorker | string | (TWorker | string)[] | null {
@@ -195,6 +199,9 @@ export class Graph {
         task: string;
         startNode?: TWorker | string;
     }): Promise<IResult> {
+
+        // console.dir(this.edges, {depth: null})
+
         // Ensure single invocation at a time
         return this.invocationMutex.runExclusive(async () => {
             const combinedHistory: IMessage[] = [];
@@ -247,6 +254,8 @@ export class Graph {
                         combinedHistory.push(...history);
                     }
                 }
+
+                // TODO: The Problem is, that the condition function of the supervisor agent returns a string, instead of a worker, which leads to the problem, that it cannot be found. 
 
                 // 3) Find the edges from currentNode
                 const edgeList = this.edges.get(currentNode) || [];

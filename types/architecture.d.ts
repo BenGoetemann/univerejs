@@ -1,10 +1,15 @@
-import { Agent, Graph, Pipe, Team } from "../src"
+import { Agent, Graph, Pipe, Team, Vote } from "../src"
 
 declare global {
   interface IArchitecture {
     _type?: string
     name: string,
     description: string
+  }
+
+  interface ISupervisor extends IArchitecture {
+    model: EModels
+    worker: TArchitecturesClasses[]
   }
 
   interface ITeam extends IArchitecture {
@@ -23,7 +28,7 @@ declare global {
     synthesizer: Agent
   }
 
-  type TWorker = Agent | Team | Pipe | Graph
+  type TWorker = Agent | Team | Pipe | Graph | Vote
 }
 
 export { }; // This ensures it is treated as a module

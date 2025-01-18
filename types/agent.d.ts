@@ -1,3 +1,5 @@
+import { ZodSchema } from "zod";
+
 declare global {
   // ====================================
   // Basic interfaces for agent instantiation
@@ -23,15 +25,29 @@ declare global {
   interface IAgent {
     _type?: string;
     model: EModels;
-    type: EAgentType;
+    type?: EAgentType;
     retries: number;
     name: string;
     description: string;
     task: string;
-    tools: any[];
+    tools?: any[];
     outputType: T;
     lifecycle: ILifecycle;
-    outputSchema?: TObject
+    outputSchema?: ZodSchema
+  }
+
+  interface IAgentFactoryOutputProperty {
+    name: string,
+    type: string,
+    description: string,
+    enum: string[],
+  }
+
+  interface IAgentFactory {
+    name: string;
+    description: string;
+    task: string;
+    outputProperties: IAgentFactoryOutputProperty[]
   }
 
   // ====================================
@@ -64,7 +80,7 @@ declare global {
     model: string,
     outputType: EOutput,
     outputSchema: any,
-    tools: any[],
+    tools: any[] | undefined,
     name: string,
     lifecycle: ILifecycle
   }

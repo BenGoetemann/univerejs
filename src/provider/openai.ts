@@ -78,11 +78,6 @@ export const textCompletion = async (completionConfig: ICompletionConfig): Promi
 }
 
 export const toolCompletion = async (completionConfig: ICompletionConfig): Promise<IMessage> => {
-
-  if (!Array.isArray(completionConfig.tools)) {
-    throw new Error(`Tools configuration is invalid for agent "${completionConfig.name}". Expected an array.`);
-  }
-
   const completion = await openai.beta.chat.completions.parse({
     messages: [
       {
@@ -93,13 +88,13 @@ export const toolCompletion = async (completionConfig: ICompletionConfig): Promi
     ],
     model: completionConfig.model,
     stream: false,
-    tools: completionConfig.tools.map(tool => tool.functionDefinition),
+    tools: completionConfig.tools?.map(tool => tool.functionDefinition),
     response_format: zodResponseFormat(completionConfig.outputSchema, "result"),
   });
 
   const toolChoice = completion.choices[0].message.tool_calls[0]
 
-  const tool = completionConfig.tools.find(tool => tool.name === toolChoice.function.name)
+  const tool = completionConfig.tools?.find(tool => tool.name === toolChoice.function.name)
   logger.tool(tool.name)
   const result = tool.fn(toolChoice.function.parsed_arguments)
 

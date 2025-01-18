@@ -1,6 +1,7 @@
 import { openaiCompletion } from "../provider/openai";
 import { groqCompletion } from "../provider/groq";
 import { Logger } from "../helper/logger"
+import { ZodSchema } from "zod";
 
 export class Agent {
     _type = "agent"
@@ -12,9 +13,9 @@ export class Agent {
     retries: number;
     model: EModels;
     outputType: EOutput;
-    outputSchema?: TObject;
-    tools: any[];
-    type: EAgentType;
+    outputSchema?: ZodSchema;
+    tools?: any[];
+    type?: EAgentType;
     history: IMessage[];
     logger: Logger
 
@@ -188,13 +189,32 @@ export class Agent {
     }
 
     private handlePromptInjections(task: string, state: any): string {
-        if (this.lifecycle?.beforeRun?.promptInjections?.length > 0) {
+        if (
+            this.lifecycle &&
+            this.lifecycle.beforeRun &&
+            Array.isArray(this.lifecycle.beforeRun.promptInjections) &&
+            this.lifecycle.beforeRun.promptInjections.length > 0
+        ) {
             try {
-                const injectionResult = this.lifecycle.beforeRun.promptInjections[0].run(state);
-                if (!injectionResult || !injectionResult.reason) {
-                    throw new Error("Invalid prompt injection result.");
+                // Initialize an array to hold all reasons from prompt injections
+                const reasons: string[] = [];
+    
+                // Iterate over each prompt injection and collect their reasons
+                for (const injection of this.lifecycle.beforeRun.promptInjections) {
+                    const injectionResult = injection.run(state);
+                    
+                    if (!injectionResult || !injectionResult.reason) {
+                        throw new Error("Invalid prompt injection result.");
+                    }
+    
+                    reasons.push(injectionResult.reason);
                 }
-                return `${task} ${injectionResult.reason}`;
+    
+                // Combine all reasons into a single string separated by spaces (or any delimiter you prefer)
+                const combinedReasons = reasons.join(' ');
+    
+                // Append the combined reasons to the original task
+                return `${task} ${combinedReasons}`;
             } catch (error) {
                 throw new Error(`Prompt injection failed: ${error}`);
             }
@@ -202,7 +222,7 @@ export class Agent {
             return task;
         }
     }
-
+    
 
     private handleStateManipulations(result: any, state: any, stage: "afterRun" | "beforeRun"): void {
         const manipulations = this.lifecycle[stage]?.stateManipulations;

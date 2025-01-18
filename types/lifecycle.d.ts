@@ -18,15 +18,15 @@ declare global {
     }
 
     interface ILifecycle {
-        beforeRun: {
-            stateManipulations: IStateManipulation[],
-            promptInjections: any[]
+        beforeRun?: {
+            stateManipulations?: any[],
+            promptInjections?: any[]
         },
         afterRun: {
-            stateManipulations: IStateManipulation[],
-            resultEvaluations: any[]
-            stateEvaluations: any[]
-            stopConditions: any[]
+            stateManipulations: any[],
+            resultEvaluations?: any[]
+            stateEvaluations?: any[]
+            stopConditions?: any[]
         }
     }
 }
