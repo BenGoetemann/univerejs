@@ -3,6 +3,11 @@ import _ from "lodash";
 export class State<T extends Record<string, any>> {
     private state: T;
 
+    /**
+     * Initializes a new instance of the State class with the provided initial state.
+     * 
+     * @param {T} initialState - The initial state object of the State instance.
+     */
     constructor(initialState: T) {
         this.state = initialState;
     }

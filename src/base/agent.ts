@@ -2,7 +2,7 @@ import { openaiCompletion } from "../provider/openai";
 import { groqCompletion } from "../provider/groq";
 import { Logger } from "../helper/logger"
 import { ZodSchema } from "zod";
-import { EModels, EOutput, IActionResult, IAgent, ICompletionConfig, ICompletionInput, ICompletionResult, IInvocation, ILifecycle, IMessage, IProviderModelSplit, IResult } from "../types";
+import { TModels, EOutput, IActionResult, IAgent, ICompletionConfig, ICompletionInput, ICompletionResult, IInvocation, ILifecycle, IMessage, IProviderModelSplit, IResult } from "../types";
 
 
 export class Agent {
@@ -13,13 +13,27 @@ export class Agent {
     description: string;
     task: string;
     retries: number;
-    model: EModels;
+    model: TModels;
     outputType: EOutput;
     outputSchema?: ZodSchema;
     tools?: any[];
     history: IMessage[];
     logger: Logger
 
+    /**
+     * Creates an instance of an Agent.
+     * 
+     * @param {IAgent} agentConfig - The configuration object for the agent.
+     * @param {ILifecycle} agentConfig.lifecycle - The lifecycle of the agent.
+     * @param {string} agentConfig.name - The name of the agent.
+     * @param {string} agentConfig.description - The description of the agent.
+     * @param {string} agentConfig.task - The task assigned to the agent.
+     * @param {number} agentConfig.retries - The number of retries allowed for the agent.
+     * @param {TModels} agentConfig.model - The model used by the agent.
+     * @param {EOutput} agentConfig.outputType - The type of output expected from the agent.
+     * @param {ZodSchema} [agentConfig.outputSchema] - The optional schema for validating the agent's output.
+     * @param {any[]} [agentConfig.tools] - The optional tools available to the agent.
+     */
     constructor(agentConfig: IAgent) {
         this.lifecycle = agentConfig.lifecycle;
         this.name = agentConfig.name;
@@ -34,6 +48,16 @@ export class Agent {
         this.logger = new Logger()
     }
 
+    /**
+     * Initiates the invocation process for the agent.
+     * 
+     * This method orchestrates the entire process of handling the invocation, including
+     * prompt injections, result evaluations, and state manipulations. It iterates through
+     * the configured retries to ensure the agent produces a final output.
+     * 
+     * @param {IInvocation} i - The invocation object containing the state and task.
+     * @returns {Promise<IResult>} A promise that resolves to the final result of the invocation.
+     */
     async invoke(i: IInvocation): Promise<IResult> {
         try {
 

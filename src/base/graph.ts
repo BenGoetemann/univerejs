@@ -19,6 +19,13 @@ export class Graph {
     // Concurrency control
     private invocationMutex = new Mutex();
 
+    /**
+     * Constructs a new Graph instance with the provided configuration.
+     *
+     * @param {IGraph} config - The configuration object for the graph.
+     * @param {string} config.name - The name of the graph.
+     * @param {string} config.description - The description of the graph.
+     */
     constructor(config: IGraph) {
         this.name = config.name;
         this.description = config.description;
@@ -94,6 +101,14 @@ export class Graph {
         }
     }
 
+    /**
+     * Adds a direct edge from one node to another in the graph.
+     *
+     * @param {TWorker | string} from - The starting node of the edge.
+     * @param {TWorker | string} to - The ending node of the edge.
+     * @returns {this} The current instance of the graph.
+     * @throws {Error} If a duplicate edge is detected or if the maximum number of nodes or edges is exceeded.
+     */
     public addEdge(from: TWorker | string, to: TWorker | string): this {
         this.validateNode(from);
         this.validateNode(to);
@@ -109,6 +124,14 @@ export class Graph {
         return this;
     }
 
+    /**
+     * Adds a conditional edge from one node to another in the graph.
+     *
+     * @param {TWorker | string} from - The starting node of the edge.
+     * @param {(state: any) => TWorker | string} fn - The function that determines the target node based on the state.
+     * @returns {this} The current instance of the graph.
+     * @throws {Error} If a duplicate edge is detected.
+     */
     public addConditionalEdge(from: TWorker | string, fn: (state: any) => TWorker | string): this {
         this.validateNode(from);
         this.validateFunction(fn, `conditional edge from "${String(from)}"`);
@@ -122,6 +145,15 @@ export class Graph {
         return this;
     }
 
+    /**
+     * Adds parallel edges from one node to multiple target nodes in the graph.
+     *
+     * @param {TWorker | string} from - The starting node of the edge.
+     * @param {(TWorker | string)[]} targets - The target nodes of the parallel edge.
+     * @param {TWorker | string} [next] - The next node to transition to after the parallel edges.
+     * @returns {this} The current instance of the graph.
+     * @throws {Error} If a duplicate edge is detected or if the maximum number of edges is exceeded.
+     */
     public addParallelEdges(
         from: TWorker | string,
         targets: (TWorker | string)[],
@@ -221,6 +253,15 @@ export class Graph {
 
     // === Invocation Method ===
 
+    /**
+     * Invokes the graph starting from the specified node or "START" by default.
+     * It traverses the graph, invoking agents and transitioning between nodes based on the edges.
+     * The traversal continues until the "END" node is reached or no more edges are available.
+     *
+     * @param {IGraphInvocation} i - The invocation object containing the state, task, and optional start node.
+     * @returns {Promise<IResult>} - A promise that resolves to the result of the graph invocation, including the final state and combined history.
+     * @throws {Error} - Throws an error if the invocation inputs are invalid, if an agent invocation fails, or if there is an error picking the next node.
+     */
     public async invoke(i: IGraphInvocation): Promise<IResult> {
         return this.invocationMutex.runExclusive(async () => {
 

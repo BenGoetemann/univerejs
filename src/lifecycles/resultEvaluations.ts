@@ -10,11 +10,25 @@ import { IActionResult, IEvaluationFunction } from "../types";
 // --------------------------------------------------
 // Shared logger instance
 // --------------------------------------------------
+
+/**
+ * Shared logger instance for logging evaluation results.
+ */
 const logger = new Logger();
 
 // --------------------------------------------------
 // Helper to standardize the evaluation pattern
 // --------------------------------------------------
+
+/**
+ * Runs an evaluation on a specific field within the result.
+ *
+ * @param {any} result - The result object to evaluate.
+ * @param {string} field - The field within the result to evaluate.
+ * @param {(value: any) => boolean} conditionFn - Function to determine if the value satisfies the condition.
+ * @param {(value: any) => string} errorMsgFn - Function to generate an error message if the condition fails.
+ * @returns {IActionResult} The outcome of the evaluation.
+ */
 function runEvaluation(
     result: any,
     field: string,
@@ -43,11 +57,16 @@ function runEvaluation(
     };
 }
 
-
 // --------------------------------------------------
 // Individual checks
 // --------------------------------------------------
 
+/**
+ * Creates an evaluation function to check if a field is set.
+ *
+ * @param {string} field - The field to check.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const isSet = (field: string): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -66,7 +85,13 @@ export const isSet = (field: string): IEvaluationFunction => {
     };
 };
 
-// Greater than
+/**
+ * Creates an evaluation function to check if a field's value is greater than a specified number.
+ *
+ * @param {string} field - The field to evaluate.
+ * @param {number} x - The number to compare against.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const gt = (field: string, x: number): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -84,7 +109,13 @@ export const gt = (field: string, x: number): IEvaluationFunction => {
     };
 };
 
-// Less than
+/**
+ * Creates an evaluation function to check if a field's value is less than a specified number.
+ *
+ * @param {string} field - The field to evaluate.
+ * @param {number} x - The number to compare against.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const lt = (field: string, x: number): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -102,7 +133,13 @@ export const lt = (field: string, x: number): IEvaluationFunction => {
     };
 };
 
-// Equal to
+/**
+ * Creates an evaluation function to check if a field's value is equal to a specified value.
+ *
+ * @param {string} field - The field to evaluate.
+ * @param {any} x - The value to compare against.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const eq = (field: string, x: any): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -118,7 +155,13 @@ export const eq = (field: string, x: any): IEvaluationFunction => {
     };
 };
 
-// Not equal to
+/**
+ * Creates an evaluation function to check if a field's value is not equal to a specified value.
+ *
+ * @param {string} field - The field to evaluate.
+ * @param {any} x - The value to compare against.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const neq = (field: string, x: any): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -134,7 +177,13 @@ export const neq = (field: string, x: any): IEvaluationFunction => {
     };
 };
 
-// Contains
+/**
+ * Creates an evaluation function to check if a field contains a specific element.
+ *
+ * @param {string} field - The field to evaluate.
+ * @param {any} element - The element to check for.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const contains = (field: string, element: any): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -165,7 +214,12 @@ export const contains = (field: string, element: any): IEvaluationFunction => {
     };
 };
 
-// Not empty
+/**
+ * Creates an evaluation function to check if a field is not empty.
+ *
+ * @param {string} field - The field to evaluate.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const notEmpty = (field: string): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -183,7 +237,13 @@ export const notEmpty = (field: string): IEvaluationFunction => {
     };
 };
 
-// Greater than or equal to
+/**
+ * Creates an evaluation function to check if a field's value is greater than or equal to a specified number.
+ *
+ * @param {string} field - The field to evaluate.
+ * @param {number} x - The number to compare against.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const gte = (field: string, x: number): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -202,7 +262,13 @@ export const gte = (field: string, x: number): IEvaluationFunction => {
     };
 };
 
-// Less than or equal to
+/**
+ * Creates an evaluation function to check if a field's value is less than or equal to a specified number.
+ *
+ * @param {string} field - The field to evaluate.
+ * @param {number} x - The number to compare against.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const lte = (field: string, x: number): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -221,7 +287,14 @@ export const lte = (field: string, x: number): IEvaluationFunction => {
     };
 };
 
-// Between
+/**
+ * Creates an evaluation function to check if a field's value is between two specified numbers.
+ *
+ * @param {string} field - The field to evaluate.
+ * @param {number} min - The minimum value.
+ * @param {number} max - The maximum value.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const between = (field: string, min: number, max: number): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -240,7 +313,13 @@ export const between = (field: string, min: number, max: number): IEvaluationFun
     };
 };
 
-// Starts with
+/**
+ * Creates an evaluation function to check if a field's string value starts with a specified prefix.
+ *
+ * @param {string} field - The field to evaluate.
+ * @param {string} prefix - The prefix to check for.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const startsWith = (field: string, prefix: string): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -257,7 +336,13 @@ export const startsWith = (field: string, prefix: string): IEvaluationFunction =
     };
 };
 
-// Ends with
+/**
+ * Creates an evaluation function to check if a field's string value ends with a specified suffix.
+ *
+ * @param {string} field - The field to evaluate.
+ * @param {string} suffix - The suffix to check for.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const endsWith = (field: string, suffix: string): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -274,7 +359,13 @@ export const endsWith = (field: string, suffix: string): IEvaluationFunction => 
     };
 };
 
-// Matches regex
+/**
+ * Creates an evaluation function to check if a field's string value matches a specified regular expression.
+ *
+ * @param {string} field - The field to evaluate.
+ * @param {RegExp} regex - The regular expression to test against.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const matches = (field: string, regex: RegExp): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -291,7 +382,13 @@ export const matches = (field: string, regex: RegExp): IEvaluationFunction => {
     };
 };
 
-// Not contains
+/**
+ * Creates an evaluation function to check if a field does not contain a specific element.
+ *
+ * @param {string} field - The field to evaluate.
+ * @param {any} element - The element to check for absence.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const notContains = (field: string, element: any): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -316,7 +413,12 @@ export const notContains = (field: string, element: any): IEvaluationFunction =>
     };
 };
 
-// Is empty
+/**
+ * Creates an evaluation function to check if a field is empty.
+ *
+ * @param {string} field - The field to evaluate.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const isEmpty = (field: string): IEvaluationFunction => {
     return {
         run: (result: any) => {
@@ -350,7 +452,14 @@ export const isEmpty = (field: string): IEvaluationFunction => {
 // evaluate() with OpenAI
 // --------------------------------------------------
 
-// TODO: Make it work with groq as well. there should be a completionFn Map as well, so the user always defines the model like: openai/gpt-4o or groq/llama-3.2-70b-instant
+/**
+ * Creates an evaluation function that uses OpenAI to evaluate a field against a condition.
+ *
+ * @param {string} field - The field to evaluate.
+ * @param {string} evaluation - The condition to evaluate the field against.
+ * @param {string} model - The OpenAI model to use for evaluation.
+ * @returns {IEvaluationFunction} The evaluation function.
+ */
 export const evaluate = (
     field: string,
     evaluation: string,
@@ -415,6 +524,12 @@ export const evaluate = (
 // Combinators: or() and and()
 // --------------------------------------------------
 
+/**
+ * Combines multiple evaluation functions using a logical OR. The combined evaluation passes if any of the conditions pass.
+ *
+ * @param {Array<{ run: (result: any) => Promise<IActionResult> | IActionResult }>} conditions - The conditions to combine.
+ * @returns {IEvaluationFunction} The combined evaluation function.
+ */
 export const or = (
     conditions: Array<{ run: (result: any) => Promise<IActionResult> | IActionResult }>
 ): IEvaluationFunction => {
@@ -442,6 +557,12 @@ export const or = (
     };
 };
 
+/**
+ * Combines multiple evaluation functions using a logical AND. The combined evaluation passes only if all conditions pass.
+ *
+ * @param {Array<{ run: (result: any) => Promise<IActionResult> | IActionResult }>} conditions - The conditions to combine.
+ * @returns {IEvaluationFunction} The combined evaluation function.
+ */
 export const and = (
     conditions: Array<{ run: (result: any) => Promise<IActionResult> | IActionResult }>
 ): IEvaluationFunction => {

@@ -11,9 +11,28 @@ import { Graph } from "./base/graph";
 import { Vote } from "./architectures/vote";
 
 export enum EModels {
-  GPT4O = "openai/gpt-4o",
-  LLAMA = "groq/llama-3.2-70b",
+  gpt_4o = "openai/gpt-4o",
+  chatgpt_4o_latest = "openai/chatgpt-4o-latest",
+  gpt_4o_mini = "openai/gpt-4o-mini",
+  o1 = "openai/o1",
+  o1_mini = "openai/o1_mini",
+  gpt_3_5_turbo = "openai/gpt-3.5-turbo",
+  gpt_3_5_turbo_0125 = "openai/gpt-3.5-turbo-0125",
+  gpt_3_5_turbo_1106 = "openai/gpt-3.5-turbo-1106",
+  gpt_3_5_turbo_instruct = "openai/gpt-3.5-turbo-instruct",
+  distil_whisper_large_v3 = "groq/distil-whisper-large-v3-en",
+  gemma_2_9b_it = "groq/gemma2-9b-it",
+  llama_3_3_70b_versatile = "groq/llama-3.3-70b-versatile",
+  llama_3_1_8b_instasnt = "groq/llama-3.1-8b-instant",
+  llama_guard_3_8b = "groq/llama-guard-3-8b",
+  llama_3_70b_8192 = "groq/llama3-70b-8192",
+  llama_3_8b_8192 = "groq/llama3-8b-8192",
+  mixtral_8x7b_32768 = "groq/mixtral-8x7b-32768",
+  whisper_large_v3 = "groq/whisper-large-v3",
+  whisper_large_v3_turbo = "groq/whisper-large-v3-turbo",
 }
+
+export type TModels = EModels | string
 
 export enum EOutput {
   JSON = "json",
@@ -22,7 +41,7 @@ export enum EOutput {
 }
 
 export interface IAgent {
-  model: EModels;
+  model: TModels;
   retries: number;
   name: string;
   description: string;
@@ -123,23 +142,23 @@ export interface IArchitecture {
 }
 
 export interface ISupervisor extends IArchitecture {
-  model: EModels
-  worker: TWorker[]
+  model: TModels
+  workers: TWorker[]
 }
 
 export interface ITeam extends IArchitecture {
   supervisor: Agent
-  worker: TWorker[]
+  workers: TWorker[]
 }
 
 export interface IPipe extends IArchitecture {
-  worker: TWorker[]
+  workers: TWorker[]
 }
 
 export interface IGraph extends IArchitecture { }
 
 export interface IVote extends IArchitecture {
-  worker: TWorker[]
+  workers: TWorker[]
   synthesizer: Agent
 }
 

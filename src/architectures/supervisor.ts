@@ -26,8 +26,6 @@ interface SupervisorState {
     additionalWorkers: IAgentFactory[] | undefined
 }
 
-// Zod Schemas
-// --------------------------------------------------------------------------------
 const supervisorOutputSchema = z.object({
     nodes: z.array(z.string()).describe("List of agent names to include in the graph"),
     edges: z.array(z.object({
@@ -218,16 +216,6 @@ you should create a worker definition such as:
 \`\`\`
 `;
 
-/**
- * Supervisor Class
- * --------------------------------------------------------------------------------
- * Responsible for creating a workflow graph of agents based on the user's task.
- * Invokes two internal Agents:
- *  1) The "supervisor" agent to generate the graph structure
- *  2) The "agent_factory" agent to create missing (conditionally referenced) agents
- *
- * Finally, it spawns any additional agents and constructs a Graph to invoke them.
- */
 export class Supervisor {
     _type = "supervisor";
     name: string;
@@ -236,12 +224,22 @@ export class Supervisor {
     workers: TWorker[];
     logger: Logger;
 
+    /**
+     * Supervisor Class
+     * --------------------------------------------------------------------------------
+     * Responsible for creating a workflow graph of agents based on the user's task.
+     * Invokes two internal Agents:
+     *  1) The "supervisor" agent to generate the graph structure
+     *  2) The "agent_factory" agent to create missing (conditionally referenced) agents
+     *
+     * Finally, it spawns any additional agents and constructs a Graph to invoke them.
+     */
     constructor(config: ISupervisor) {
         this.name = config.name;
         this.description = config.description;
-        this.workers = config.worker;
+        this.workers = config.workers;
         this.logger = new Logger();
-        this.model = config.model;
+        this.model = config.model as EModels;
     }
 
     /**
@@ -266,7 +264,7 @@ export class Supervisor {
         const supervisorPipe = new Pipe({
             name: "supervisor_pipe",
             description: "Executes supervisor -> agent factory pipeline",
-            worker: [supervisorAgent, agentFactoryAgent],
+            workers: [supervisorAgent, agentFactoryAgent],
         });
 
         await supervisorPipe.invoke({

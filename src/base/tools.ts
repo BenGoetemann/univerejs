@@ -14,6 +14,16 @@ const createFunctionDefinition = (name: string, description: string, schema: Zod
     }
 }
 
+/**
+ * Creates a new tool based on the provided configuration.
+ * 
+ * @param {ICustomToolConfig} i - The configuration object for the tool.
+ * @param {string} i.name - The name of the tool.
+ * @param {string} i.description - The description of the tool.
+ * @param {ZodSchema} i.schema - The schema for the tool's parameters.
+ * @param {(...args: any) => any} i.fn - The function to be executed by the tool.
+ * @returns {ITool} - The created tool object.
+ */
 export const createTool = (i: ICustomToolConfig): ITool => {
     return {
         name: i.name,
@@ -22,14 +32,14 @@ export const createTool = (i: ICustomToolConfig): ITool => {
     }
 }
 
-export const helloWorldTool = (): ITool => {
-    return {
-        name: "hello world",
-        functionDefinition: createFunctionDefinition("hello world tool", "hello world tool", z.object({
-            hello: z.string().describe('world')
-        })),
-        fn: () => {
-            console.log("Hello World")
-        }
-    }
-}
+// export const helloWorldTool = (): ITool => {
+//     return {
+//         name: "hello world",
+//         functionDefinition: createFunctionDefinition("hello world tool", "hello world tool", z.object({
+//             hello: z.string().describe('world')
+//         })),
+//         fn: () => {
+//             console.log("Hello World")
+//         }
+//     }
+// }
