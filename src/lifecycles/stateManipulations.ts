@@ -2,15 +2,8 @@
 import { Logger } from "../helper/logger";
 import { State } from "../base/state";
 import _ from "lodash";
+import { IActionResult, IStateManipulationFunction } from "../types";
 
-export type IActionResult = {
-    pass: boolean;
-    reason: string;
-};
-
-export interface IStateManipulationFunction {
-    run: (result: any, state: State<any>) => IActionResult;
-}
 
 // --------------------------------------------------
 // Shared logger instance
