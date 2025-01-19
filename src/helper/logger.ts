@@ -1,6 +1,7 @@
 import { bgBlack, bgBlue, underline } from "colorette"
 import { Agent } from "../base/agent";
 import { Pipe } from "../architectures";
+import { IActionResult, ICompletionResult, TWorker } from "../types";
 
 export class Logger {
     result = (name: string, result: ICompletionResult) => {

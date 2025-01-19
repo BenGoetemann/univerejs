@@ -1,5 +1,6 @@
 import { z, ZodSchema } from "zod"
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { ICustomToolConfig, IFuncionDefinition, ITool } from "../types";
 
 const createFunctionDefinition = (name: string, description: string, schema: ZodSchema): IFuncionDefinition => {
     return {

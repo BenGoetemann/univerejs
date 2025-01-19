@@ -2,6 +2,8 @@ import { openaiCompletion } from "../provider/openai";
 import { groqCompletion } from "../provider/groq";
 import { Logger } from "../helper/logger"
 import { ZodSchema } from "zod";
+import { EModels, EOutput, IActionResult, IAgent, ICompletionConfig, ICompletionInput, ICompletionResult, IInvocation, ILifecycle, IMessage, IProviderModelSplit, IResult } from "../types";
+
 
 export class Agent {
     _type = "agent"
@@ -15,7 +17,6 @@ export class Agent {
     outputType: EOutput;
     outputSchema?: ZodSchema;
     tools?: any[];
-    type?: EAgentType;
     history: IMessage[];
     logger: Logger
 
@@ -27,7 +28,6 @@ export class Agent {
         this.retries = agentConfig.retries;
         this.model = agentConfig.model;
         this.outputType = agentConfig.outputType;
-        this.type = agentConfig.type;
         this.tools = agentConfig.tools;
         this.outputSchema = agentConfig.outputSchema;
         this.history = []

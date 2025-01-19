@@ -10,6 +10,7 @@ import { Logger } from "../helper/logger";
 
 import { chooseBetween, focusOn, isSet, set } from "../lifecycles";
 import { Pipe } from "./pipe";
+import { EModels, EOutput, IAgentFactory, IAgentFactoryOutputProperty, IInvocation, IResult, ISupervisor, TWorker } from "../types";
 /** 
  * The SupervisorState shape 
  */
@@ -309,7 +310,7 @@ export class Supervisor {
             task: SUPERVISOR_PROMPT,
             retries: 2,
             model: this.model,
-            outputType: "json",
+            outputType: EOutput.JSON,
             outputSchema: supervisorOutputSchema,
             lifecycle: {
                 beforeRun: {
@@ -336,7 +337,7 @@ export class Supervisor {
             task: AGENT_FACTORY_PROMPT,
             retries: 2,
             model: this.model,
-            outputType: "json",
+            outputType: EOutput.JSON,
             outputSchema: agentFactoryOutputSchema,
             lifecycle: {
                 beforeRun: {
@@ -366,7 +367,7 @@ export class Supervisor {
                 task: workerDefinition.task,
                 retries: 2,
                 model: this.model,
-                outputType: "json",
+                outputType: EOutput.JSON,
                 outputSchema,
                 lifecycle: {
                     afterRun: {

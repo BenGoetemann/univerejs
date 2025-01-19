@@ -3,6 +3,7 @@ import { z } from "zod";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { Logger } from "../helper/logger";
 import _ from "lodash"; // Lodash import
+import { IActionResult, IEvaluationFunction } from "../types";
 
 // TODO: Implement nested evaluation like weather.humidity
 

@@ -1,4 +1,5 @@
 import { Graph } from "../base/graph";
+import { IInvocation, IResult, IVote, TWorker } from "../types";
 
 export class Vote {
     _type = "vote";

@@ -1,5 +1,6 @@
 import { Agent } from "../base/agent";
 import { Graph } from "../base/graph";
+import { IInvocation, IPipe, IResult, TWorker } from "../types";
 import { Team } from "./team";
 
 export class Pipe {
@@ -19,7 +20,7 @@ export class Pipe {
         // 1) Create a new Graph
         const graph = new Graph({
             name: "pipe_graph",
-            description: "the graph of a pipe",
+            description: "the graph of a pipe"
         });
 
         // 2) We'll chain from "START" -> agentOrPipe1 -> agentOrPipe2 -> ... -> "END"

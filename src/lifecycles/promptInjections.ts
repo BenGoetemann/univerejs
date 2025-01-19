@@ -2,6 +2,7 @@ import { Logger } from "../helper/logger";
 import { State } from "../base/state";
 import { Agent } from "../base/agent";
 import _ from "lodash"; // Lodash import
+import { IActionResult, IEvaluationFunction, TWorker } from "../types";
 
 // --------------------------------------------------
 // Shared logger instance

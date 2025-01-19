@@ -1,6 +1,7 @@
 import { Agent } from "./agent";
 import { Logger } from "../helper/logger";
 import { Mutex } from 'async-mutex'; // If using mutex for concurrency control
+import { ConditionalEdge, DirectEdge, Edge, IGraph, IGraphInvocation, IMessage, IResult, ParallelEdge, TWorker } from "../types";
 
 const logger = new Logger();
 
@@ -220,17 +221,12 @@ export class Graph {
 
     // === Invocation Method ===
 
-    public async invoke({
-        state,
-        task,
-        startNode = "START",
-    }: {
-        state: any;
-        task: string;
-        startNode?: TWorker | string;
-    }): Promise<IResult> {
+    public async invoke(i: IGraphInvocation): Promise<IResult> {
         return this.invocationMutex.runExclusive(async () => {
-            this.validateInvocationInputs(state, task, startNode);
+
+            const startNode = i.startNode ?? "START"
+
+            this.validateInvocationInputs(i.state, i.task, startNode);
 
             const combinedHistory: IMessage[] = [];
             let currentNode: TWorker | string = startNode;
@@ -251,8 +247,8 @@ export class Graph {
 
                 if (typeof currentNode !== "string") {
                     const agent = currentNode as Agent;
-                    const { state: newState, history } = await this.runAgent(agent, state, task);
-                    state = newState || state;
+                    const { state: newState, history } = await this.runAgent(agent, i.state, i.task);
+                    i.state = newState || i.state;
                     if (history?.length) {
                         combinedHistory.push(...history);
                     }
@@ -266,7 +262,7 @@ export class Graph {
 
                 let nextNode: TWorker | string | (TWorker | string)[] | null;
                 try {
-                    nextNode = this.pickNextNode(edgeList, state);
+                    nextNode = this.pickNextNode(edgeList, i.state);
                 } catch (error) {
                     throw new Error(`Error picking next node from "${String(currentNode)}": ${error}`);
                 }
@@ -281,14 +277,14 @@ export class Graph {
                 this.validateNextNodePresence(nextNode);
 
                 if (Array.isArray(nextNode)) {
-                    currentNode = await this.handleParallelEdges(nextNode, edgeList, state, task);
+                    currentNode = await this.handleParallelEdges(nextNode, edgeList, i.state, i.task);
                     continue;
                 }
 
                 currentNode = nextNode;
             }
 
-            return { history: combinedHistory, state };
+            return { history: combinedHistory, state: i.state };
         });
     }
 
