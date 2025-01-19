@@ -5,90 +5,119 @@ import { Mutex } from 'async-mutex'; // If using mutex for concurrency control
 const logger = new Logger();
 
 export class Graph {
-    _type = "graph"
-    name: string
-    description: string
+    // Graph metadata
+    _type = "graph";
+    name: string;
+    description: string;
+
+    // Graph structure
     private edges = new Map<TWorker | string, Edge[]>();
-    private MAX_NODES = 1000;
-    private MAX_EDGES_PER_NODE = 100;
-    private invocationMutex = new Mutex(); // For concurrency control
+    private readonly MAX_NODES = 1000;
+    private readonly MAX_EDGES_PER_NODE = 100;
 
-    constructor(i: IGraph) {
-        this.name = i.name;
-        this.description = i.description;
+    // Concurrency control
+    private invocationMutex = new Mutex();
 
-        // // Validate that the graph has at least one node (e.g., "START")
-        // if (!this.edges.has("START")) {
-        //     throw new Error(`Graph "${this.name}" must have a "START" node with outgoing edges.`);
-        // }
+    constructor(config: IGraph) {
+        this.name = config.name;
+        this.description = config.description;
 
-        // Optionally, validate that there is an "END" node or that some path leads to "END"
+        // this.validateStartNode();
+    }
+
+    // === Node and Edge Validation ===
+
+    private validateStartNode(): void {
+        if (!this.edges.has("START")) {
+            throw new Error(`Graph "${this.name}" must have a "START" node with outgoing edges.`);
+        }
+        // Optionally, add validation for "END" node or paths leading to "END"
     }
 
     private validateNode(node: TWorker | string): void {
         if (node === undefined || node === null) {
             throw new Error(`Node cannot be undefined or null.`);
         }
-        if (typeof node !== "string" && !(node instanceof Agent)) {
-            throw new Error(`Invalid node type: ${typeof node}. Node must be a string or an Agent instance.`);
+    }
+
+    private nodeExists(node: TWorker | string): boolean {
+        if (typeof node === "string") {
+            return this.edges.has(node) || node === "END";
+        }
+        // Assuming Agent instances are always valid nodes
+        return true;
+    }
+
+    // === Edge Management ===
+
+    private getOrCreateEdges(fromNode: TWorker | string): Edge[] {
+        if (!this.edges.has(fromNode)) {
+            this.ensureMaxNodes();
+            this.edges.set(fromNode, []);
+        }
+        return this.edges.get(fromNode)!;
+    }
+
+    private ensureMaxNodes(): void {
+        if (this.edges.size >= this.MAX_NODES) {
+            throw new Error(`Cannot add more nodes to the graph. Maximum of ${this.MAX_NODES} nodes reached.`);
+        }
+    }
+
+    private ensureMaxEdges(fromNode: TWorker | string): void {
+        const edges = this.getOrCreateEdges(fromNode);
+        if (edges.length >= this.MAX_EDGES_PER_NODE) {
+            throw new Error(`Cannot add more edges to node "${String(fromNode)}". Maximum of ${this.MAX_EDGES_PER_NODE} edges per node reached.`);
         }
     }
 
     private hasEdge(fromNode: TWorker | string, newEdge: Edge): boolean {
         const edges = this.getOrCreateEdges(fromNode);
-        return edges.some(edge => {
-            if (edge.type !== newEdge.type) return false;
-            switch (edge.type) {
-                case "direct":
-                    return (edge as DirectEdge).to === (newEdge as DirectEdge).to;
-                case "conditional":
-                    return (edge as ConditionalEdge).fn === (newEdge as ConditionalEdge).fn;
-                case "parallel":
-                    return JSON.stringify((edge as ParallelEdge).to) === JSON.stringify((newEdge as ParallelEdge).to) &&
-                        (edge as ParallelEdge).next === (newEdge as ParallelEdge).next;
-            }
-        });
+        return edges.some(edge => this.areEdgesEqual(edge, newEdge));
     }
 
-    public addEdge(from: TWorker | string, to: TWorker | string) {
+    private areEdgesEqual(edge1: Edge, edge2: Edge): boolean {
+        if (edge1.type !== edge2.type) return false;
+
+        switch (edge1.type) {
+            case "direct":
+                return (edge1 as DirectEdge).to === (edge2 as DirectEdge).to;
+            case "conditional":
+                return (edge1 as ConditionalEdge).fn === (edge2 as ConditionalEdge).fn;
+            case "parallel":
+                const e1 = edge1 as ParallelEdge;
+                const e2 = edge2 as ParallelEdge;
+                return JSON.stringify(e1.to) === JSON.stringify(e2.to) && e1.next === e2.next;
+            default:
+                return false;
+        }
+    }
+
+    public addEdge(from: TWorker | string, to: TWorker | string): this {
         this.validateNode(from);
         this.validateNode(to);
-
-        if (this.edges.size >= this.MAX_NODES && !this.edges.has(from)) {
-            throw new Error(`Cannot add more nodes to the graph. Maximum of ${this.MAX_NODES} nodes reached.`);
-        }
-
-        const list = this.getOrCreateEdges(from);
-        if (list.length >= this.MAX_EDGES_PER_NODE) {
-            throw new Error(`Cannot add more edges to node "${String(from)}". Maximum of ${this.MAX_EDGES_PER_NODE} edges per node reached.`);
-        }
+        this.ensureMaxNodes();
+        this.ensureMaxEdges(from);
 
         const newEdge: DirectEdge = { type: "direct", to };
         if (this.hasEdge(from, newEdge)) {
             throw new Error(`Duplicate direct edge from "${String(from)}" to "${String(to)}" is not allowed.`);
         }
 
-        list.push(newEdge);
+        this.getOrCreateEdges(from).push(newEdge);
         return this;
     }
 
-    public addConditionalEdge(from: TWorker | string, fn: (state: any) => TWorker | string) {
-
-        console.dir(fn, {depth: null})
-
+    public addConditionalEdge(from: TWorker | string, fn: (state: any) => TWorker | string): this {
         this.validateNode(from);
-        if (typeof fn !== "function") {
-            throw new Error(`Invalid function provided for conditional edge from "${String(from)}".`);
-        }
+        this.validateFunction(fn, `conditional edge from "${String(from)}"`);
 
-        const list = this.getOrCreateEdges(from);
         const newEdge: ConditionalEdge = { type: "conditional", fn };
-
         if (this.hasEdge(from, newEdge)) {
             throw new Error(`Duplicate conditional edge from "${String(from)}" is not allowed.`);
         }
 
-        list.push(newEdge);
+        this.getOrCreateEdges(from).push(newEdge);
         return this;
     }
 
@@ -96,53 +125,49 @@ export class Graph {
         from: TWorker | string,
         targets: (TWorker | string)[],
         next?: TWorker | string
-    ) {
+    ): this {
         this.validateNode(from);
-        if (!Array.isArray(targets) || targets.some(target => typeof target !== "string" && !(target instanceof Agent))) {
-            throw new Error(`Invalid targets provided for parallel edges from "${String(from)}". Targets must be an array of strings or Agent instances.`);
-        }
-        if (next && typeof next !== "string" && !(next instanceof Agent)) {
-            throw new Error(`Invalid next node provided for parallel edges from "${String(from)}". Next node must be a string or an Agent instance.`);
-        }
+        this.validateParallelTargets(targets, from);
+        this.validateNextNode(next, from);
 
-        if (next && typeof next === "string" && next !== "END" && !this.nodeExists(next)) {
-            console.warn(`Next node "${String(next)}" specified in parallel edge from "${String(from)}" does not exist yet.`);
-            // Optionally, throw an error or allow dynamic node addition
-        }
-
-        const list = this.getOrCreateEdges(from);
-        if (list.length >= this.MAX_EDGES_PER_NODE) {
-            throw new Error(`Cannot add more edges to node "${String(from)}". Maximum of ${this.MAX_EDGES_PER_NODE} edges per node reached.`);
-        }
+        this.ensureMaxEdges(from);
 
         const newEdge: ParallelEdge = { type: "parallel", to: targets, next };
         if (this.hasEdge(from, newEdge)) {
             throw new Error(`Duplicate parallel edge from "${String(from)}" is not allowed.`);
         }
 
-        list.push(newEdge);
+        this.getOrCreateEdges(from).push(newEdge);
         return this;
     }
 
-    private getOrCreateEdges(fromNode: TWorker | string): Edge[] {
-        if (!this.edges.has(fromNode)) {
-            if (this.edges.size >= this.MAX_NODES) {
-                throw new Error(`Cannot add more nodes to the graph. Maximum of ${this.MAX_NODES} nodes reached.`);
-            }
-            this.edges.set(fromNode, []);
+    private validateFunction(fn: any, context: string): void {
+        if (typeof fn !== "function") {
+            throw new Error(`Invalid function provided for ${context}.`);
         }
-        return this.edges.get(fromNode)!;
     }
 
-    private nodeExists(node: TWorker | string): boolean {
-        if (typeof node === "string") {
-            return this.edges.has(node) || node === "END";
-        } else {
-            // Assuming Agent instances are always valid nodes
-            return true;
+    private validateParallelTargets(targets: any[], from: TWorker | string): void {
+        if (!Array.isArray(targets) || targets.some(target => typeof target !== "string" && !(target instanceof Agent))) {
+            throw new Error(`Invalid targets provided for parallel edges from "${String(from)}". Targets must be an array of strings or Agent instances.`);
         }
-        return true
     }
+
+    private validateNextNode(next: any, from: TWorker | string): void {
+        if (next && typeof next !== "string" && !(next instanceof Agent)) {
+            throw new Error(`Invalid next node provided for parallel edges from "${String(from)}". Next node must be a string or an Agent instance.`);
+        }
+
+        if (next && typeof next === "string" && next !== "END" && !this.nodeExists(next)) {
+            console.warn(`Next node "${String(next)}" specified in parallel edge from "${String(from)}" does not exist yet.`);
+        }
+    }
+
+    // === Node Existence Check ===
+
+    // Already handled in nodeExists method
+
+    // === Edge Retrieval ===
 
     private getNextNodeFromEdge(edge: Edge, state: any): TWorker | string | (TWorker | string)[] | null {
         switch (edge.type) {
@@ -150,9 +175,6 @@ export class Graph {
                 return edge.to;
             case "conditional":
                 const result = edge.fn(state);
-                if (result === undefined || result === null) {
-                    throw new Error(`Conditional edge function returned invalid node: ${result}`);
-                }
                 this.validateNode(result);
                 return result;
             case "parallel":
@@ -166,29 +188,37 @@ export class Graph {
         for (const edge of edges) {
             const next = this.getNextNodeFromEdge(edge, state);
             if (next != null) {
-                return next; // could be a single node or an array
+                return next;
             }
         }
         return null;
     }
 
+    // === Agent Invocation ===
+
     private async runAgent(agent: Agent, state: any, task: string): Promise<{ state: any, history: IMessage[] }> {
         try {
             const result = await agent.invoke({ state, task });
-            if (!result || typeof result !== "object" || !('state' in result) || !('history' in result)) {
-                throw new Error(`Agent "${agent.name}" returned an invalid result. Expected an object with 'state' and 'history'.`);
-            }
-            if (result.state && typeof result.state !== 'object') {
-                throw new Error(`Agent "${agent.name}" returned an invalid 'state'. Expected an object.`);
-            }
-            if (result.history && !Array.isArray(result.history)) {
-                throw new Error(`Agent "${agent.name}" returned an invalid 'history'. Expected an array.`);
-            }
+            this.validateAgentResult(agent, result);
             return { state: result.state, history: result.history };
         } catch (error) {
             throw new Error(`Error invoking Agent "${agent.name}": ${error}`);
         }
     }
+
+    private validateAgentResult(agent: Agent, result: any): void {
+        if (!result || typeof result !== "object") {
+            throw new Error(`Agent "${agent.name}" returned an invalid result. Expected an object with 'state' and 'history'.`);
+        }
+        if ('state' in result && typeof result.state !== 'object') {
+            throw new Error(`Agent "${agent.name}" returned an invalid 'state'. Expected an object.`);
+        }
+        if ('history' in result && !Array.isArray(result.history)) {
+            throw new Error(`Agent "${agent.name}" returned an invalid 'history'. Expected an array.`);
+        }
+    }
+
+    // === Invocation Method ===
 
     public async invoke({
         state,
@@ -199,72 +229,41 @@ export class Graph {
         task: string;
         startNode?: TWorker | string;
     }): Promise<IResult> {
-
-        // console.dir(this.edges, {depth: null})
-
-        // Ensure single invocation at a time
         return this.invocationMutex.runExclusive(async () => {
+            this.validateInvocationInputs(state, task, startNode);
+
             const combinedHistory: IMessage[] = [];
             let currentNode: TWorker | string = startNode;
             const visitedNodes = new Set<TWorker | string>();
-            const MAX_INVOCATIONS = 1000; // Prevent excessively long runs
-
+            const MAX_INVOCATIONS = 1000;
             let invocationCount = 0;
-
-            // Validate inputs
-            if (state === undefined || state === null || typeof state !== 'object') {
-                throw new Error(`Invalid state provided to Graph.invoke. State must be a non-null object.`);
-            }
-            if (!task || typeof task !== 'string') {
-                throw new Error(`Invalid task provided to Graph.invoke. Task must be a non-empty string.`);
-            }
-            if (startNode === undefined || startNode === null) {
-                throw new Error(`Invalid startNode provided to Graph.invoke. Start node cannot be undefined or null.`);
-            }
-            if (!this.nodeExists(startNode)) {
-                throw new Error(`Start node "${String(startNode)}" does not exist in the graph.`);
-            }
 
             while (true) {
                 invocationCount++;
-                if (invocationCount > MAX_INVOCATIONS) {
-                    throw new Error(`Invocation count exceeded the maximum limit of ${MAX_INVOCATIONS}. Possible circular dependency detected.`);
-                }
+                this.ensureMaxInvocations(invocationCount, MAX_INVOCATIONS);
 
-                // 1) Check for END
                 if (currentNode === "END") {
                     console.log("Reached END");
                     break;
                 }
 
-                // Detect circular dependency
-                if (visitedNodes.has(currentNode)) {
-                    throw new Error(`Circular dependency detected at node "${String(currentNode)}".`);
-                }
                 visitedNodes.add(currentNode);
 
-                // 2) If currentNode is an Agent (i.e., not a string), invoke it
                 if (typeof currentNode !== "string") {
                     const agent = currentNode as Agent;
                     const { state: newState, history } = await this.runAgent(agent, state, task);
-                    if (newState) {
-                        state = newState;
-                    }
-                    if (history && history.length) {
+                    state = newState || state;
+                    if (history?.length) {
                         combinedHistory.push(...history);
                     }
                 }
 
-                // TODO: The Problem is, that the condition function of the supervisor agent returns a string, instead of a worker, which leads to the problem, that it cannot be found. 
-
-                // 3) Find the edges from currentNode
                 const edgeList = this.edges.get(currentNode) || [];
                 if (edgeList.length === 0) {
                     console.log(`No edges found for node "${String(currentNode)}". Exiting.`);
                     break;
                 }
 
-                // 4) Pick the next node (could be string, Agent, or an array)
                 let nextNode: TWorker | string | (TWorker | string)[] | null;
                 try {
                     nextNode = this.pickNextNode(edgeList, state);
@@ -272,88 +271,117 @@ export class Graph {
                     throw new Error(`Error picking next node from "${String(currentNode)}": ${error}`);
                 }
 
-                // 5) Log the edge traversal
-                try {
-                    logger.edge(currentNode, nextNode);
-                } catch (loggingError) {
-                    console.warn(`Logging failed for edge from "${String(currentNode)}" to "${String(nextNode)}":`, loggingError);
-                }
+                this.logEdgeTraversal(currentNode, nextNode);
 
-                // 6) If no valid next node, we consider it done
                 if (!nextNode) {
                     currentNode = "END";
                     continue;
                 }
 
-                // 7) Validate the next node(s)
+                this.validateNextNodePresence(nextNode);
+
                 if (Array.isArray(nextNode)) {
-                    nextNode.forEach(node => {
-                        if (!this.nodeExists(node)) {
-                            throw new Error(`Next node "${String(node)}" does not exist in the graph.`);
-                        }
-                    });
-                } else {
-                    if (!this.nodeExists(nextNode)) {
-                        throw new Error(`Next node "${String(nextNode)}" does not exist in the graph.`);
-                    }
-                }
-
-                // 8) If nextNode is an array => parallel edge
-                if (Array.isArray(nextNode)) {
-                    const parallelEdge = edgeList.find(e => e.type === "parallel") as ParallelEdge | undefined;
-                    if (!parallelEdge) {
-                        currentNode = "END";
-                        continue;
-                    }
-
-                    // 1) run them all in parallel
-                    const results = await Promise.all(
-                        nextNode.map(async (n) => {
-                            if (typeof n !== "string") {
-                                try {
-                                    return await this.runAgent(n as Agent, state, task);
-                                } catch (error) {
-                                    throw new Error(`Error invoking Agent in parallel edge: ${error}`);
-                                }
-                            } else {
-                                // Handle string nodes appropriately
-                                // For this example, we skip string nodes
-                                return null;
-                            }
-                        })
-                    ).catch(error => {
-                        throw new Error(`Parallel edge invocation failed: ${error}`);
-                    });
-
-                    // 2) merge states/histories
-                    results.forEach((r) => {
-                        if (r?.state) {
-                            state = r.state; // Consider merging strategies
-                        }
-                        if (r?.history?.length) {
-                            combinedHistory.push(...r.history);
-                        }
-                    });
-
-                    // 3) Validate and set the postNode
-                    const postNode = parallelEdge.next || "END";
-                    if (postNode !== "END" && !this.nodeExists(postNode)) {
-                        throw new Error(`Next node "${String(postNode)}" specified in parallel edge does not exist in the graph.`);
-                    }
-
-                    currentNode = postNode;
+                    currentNode = await this.handleParallelEdges(nextNode, edgeList, state, task);
                     continue;
                 }
 
-                // 9) Otherwise, we have a single nextNode => continue
                 currentNode = nextNode;
             }
 
-            // 10) Return the combined history and final state
-            return {
-                history: combinedHistory,
-                state,
-            };
+            return { history: combinedHistory, state };
+        });
+    }
+
+    private validateInvocationInputs(state: any, task: string, startNode: any): void {
+        if (state === undefined || state === null || typeof state !== 'object') {
+            throw new Error(`Invalid state provided to Graph.invoke. State must be a non-null object.`);
+        }
+        if (!task || typeof task !== 'string') {
+            throw new Error(`Invalid task provided to Graph.invoke. Task must be a non-empty string.`);
+        }
+        if (startNode === undefined || startNode === null) {
+            throw new Error(`Invalid startNode provided to Graph.invoke. Start node cannot be undefined or null.`);
+        }
+        if (!this.nodeExists(startNode)) {
+            throw new Error(`Start node "${String(startNode)}" does not exist in the graph.`);
+        }
+    }
+
+    private ensureMaxInvocations(count: number, max: number): void {
+        if (count > max) {
+            throw new Error(`Invocation count exceeded the maximum limit of ${max}. Possible circular dependency detected.`);
+        }
+    }
+
+    private logEdgeTraversal(from: TWorker | string, to: any): void {
+        try {
+            logger.edge(from, to);
+        } catch (loggingError) {
+            console.warn(`Logging failed for edge from "${String(from)}" to "${String(to)}":`, loggingError);
+        }
+    }
+
+    private validateNextNodePresence(nextNode: any): void {
+        if (Array.isArray(nextNode)) {
+            nextNode.forEach(node => {
+                if (!this.nodeExists(node)) {
+                    throw new Error(`Next node "${String(node)}" does not exist in the graph.`);
+                }
+            });
+        } else {
+            if (!this.nodeExists(nextNode)) {
+                throw new Error(`Next node "${String(nextNode)}" does not exist in the graph.`);
+            }
+        }
+    }
+
+    private async handleParallelEdges(
+        nextNodes: (TWorker | string)[],
+        edgeList: Edge[],
+        state: any,
+        task: string
+    ): Promise<TWorker | string> {
+        const parallelEdge = edgeList.find(e => e.type === "parallel") as ParallelEdge | undefined;
+        if (!parallelEdge) {
+            return "END";
+        }
+
+        const results = await this.invokeParallelAgents(nextNodes, state, task);
+
+        results.forEach(result => {
+            if (result?.state) {
+                state = result.state; // Consider implementing a merge strategy if needed
+            }
+            if (result?.history?.length) {
+                // Assuming combinedHistory is accessible here or handle differently
+                // combinedHistory.push(...result.history);
+            }
+        });
+
+        const postNode = parallelEdge.next || "END";
+        if (postNode !== "END" && !this.nodeExists(postNode)) {
+            throw new Error(`Next node "${String(postNode)}" specified in parallel edge does not exist in the graph.`);
+        }
+
+        return postNode;
+    }
+
+    private async invokeParallelAgents(
+        targets: (TWorker | string)[],
+        state: any,
+        task: string
+    ): Promise<Array<{ state: any, history: IMessage[] } | null>> {
+        return Promise.all(
+            targets.map(async (target) => {
+                if (typeof target !== "string") {
+                    const agent = target as Agent;
+                    return await this.runAgent(agent, state, task);
+                }
+                // Handle string nodes if necessary
+                return null;
+            })
+        ).catch(error => {
+            throw new Error(`Parallel edge invocation failed: ${error}`);
         });
     }
 }
