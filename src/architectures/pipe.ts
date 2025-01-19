@@ -1,7 +1,5 @@
-import { Agent } from "../base/agent";
 import { Graph } from "../base/graph";
 import { IInvocation, IPipe, IResult, TWorker } from "../types";
-import { Team } from "./team";
 
 export class Pipe {
     _type = "pipe";

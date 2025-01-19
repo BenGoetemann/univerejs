@@ -1,7 +1,6 @@
 import { Agent } from "../base/agent";
 import { Graph } from "../base/graph";
 import { IInvocation, IResult, ITeam, TWorker } from "../types";
-import { chooseBetween } from "../lifecycles/promptInjections";
 
 export class Team {
     _type = "team";

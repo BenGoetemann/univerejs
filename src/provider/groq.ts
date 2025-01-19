@@ -1,7 +1,6 @@
 import Groq from "groq-sdk";  // Import Groq client library
 import 'dotenv/config';  // Loads environment variables from .env
 import { Logger } from "../helper/logger";
-import { z } from "zod";
 import { EOutput, ICompletionConfig, IMessage } from "../types";
 
 const groq = new Groq();  // Initialize Groq client
